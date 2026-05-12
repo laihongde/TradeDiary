@@ -92,7 +92,7 @@ export function AddAnalysisForm() {
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
-                className={`h-3 w-3 rounded-full ${i < dateCount ? "bg-blue-500" : "bg-gray-200"}`}
+                className={`h-3 w-3 rounded-full ${i < dateCount ? "bg-blue-500" : "bg-gray-200 dark:bg-gray-600"}`}
               />
             ))}
           </div>
@@ -114,7 +114,7 @@ export function AddAnalysisForm() {
             className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {isPreMarket && (
-            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700 border border-amber-200">
+            <span className="rounded-full bg-amber-50 dark:bg-amber-400/20 px-2 py-0.5 text-xs text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-400/40">
               開盤前 · 自動設為昨日
             </span>
           )}
@@ -127,7 +127,7 @@ export function AddAnalysisForm() {
           {dateSymbols.map((sym) => (
             <span
               key={sym}
-              className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700"
+              className="rounded-full bg-blue-50 dark:bg-blue-400/20 px-3 py-1 text-sm font-medium text-blue-700 dark:text-blue-300 border border-transparent dark:border-blue-400/30"
             >
               {sym}
             </span>

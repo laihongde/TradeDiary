@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AddAnalysisForm } from "./components/AddAnalysisForm";
 import { BackupPage } from "./components/BackupPage";
 import { DailyHistory } from "./components/DailyHistory";
@@ -35,12 +35,19 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "sources", label: "資料來源" },
 ];
 
-function TopBar() {
+function TopBar({ dark, onToggleDark }: { dark: boolean; onToggleDark: () => void }) {
   const refreshAll = useRefreshAllLatest();
   const updateStatuses = useUpdateStatuses();
 
   return (
     <div className="flex items-center gap-2">
+      <button
+        onClick={onToggleDark}
+        className="theme-toggle"
+        title={dark ? "切換亮色模式" : "切換暗色模式"}
+      >
+        {dark ? "☀ Light" : "🌙 Dark"}
+      </button>
       <button
         onClick={() => {
           updateStatuses.mutate();
@@ -59,6 +66,12 @@ export default function App() {
   const [tab, setTab] = useState<Tab>("today");
   const [tabKey, setTabKey] = useState(0);
   const [showSplash, setShowSplash] = useState(true);
+  const [dark, setDark] = useState(true);
+
+  // 預設 dark mode，套用到 <html>
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", dark);
+  }, [dark]);
 
   const handleTabChange = useCallback((t: Tab) => {
     setTab(t);
@@ -81,7 +94,7 @@ export default function App() {
                 Local-first
               </span>
             </h1>
-            <TopBar />
+            <TopBar dark={dark} onToggleDark={() => setDark((d) => !d)} />
           </div>
 
           {/* Tabs */}

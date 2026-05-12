@@ -35,11 +35,11 @@ export function ReturnBadge({
 export function SuccessBadge({ value }: { value?: boolean | null }) {
   if (value == null) return <span className="text-gray-400">-</span>;
   return value ? (
-    <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+    <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-400/25 dark:text-green-300">
       成功
     </span>
   ) : (
-    <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+    <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-400/25 dark:text-red-300">
       失敗
     </span>
   );
@@ -48,11 +48,11 @@ export function SuccessBadge({ value }: { value?: boolean | null }) {
 // ── 狀態標籤 ──────────────────────────────────────────────────────────────────
 
 const STATUS_LABELS: Record<AnalysisStatus, { label: string; cls: string }> = {
-  PENDING: { label: "待追蹤", cls: "bg-blue-100 text-blue-700" },
-  READY_TO_REVIEW: { label: "待檢視", cls: "bg-amber-100 text-amber-700" },
-  REVIEWED: { label: "已檢視", cls: "bg-green-100 text-green-700" },
-  TRACKING: { label: "追蹤中", cls: "bg-purple-100 text-purple-700" },
-  DATA_ERROR: { label: "資料錯誤", cls: "bg-red-100 text-red-700" },
+  PENDING:        { label: "待追蹤", cls: "bg-blue-100 text-blue-800 dark:bg-blue-400/25 dark:text-blue-300" },
+  READY_TO_REVIEW:{ label: "待檢視", cls: "bg-amber-100 text-amber-800 dark:bg-amber-400/25 dark:text-amber-300" },
+  REVIEWED:       { label: "已檢視", cls: "bg-green-100 text-green-800 dark:bg-green-400/25 dark:text-green-300" },
+  TRACKING:       { label: "追蹤中", cls: "bg-purple-100 text-purple-800 dark:bg-purple-400/25 dark:text-purple-300" },
+  DATA_ERROR:     { label: "資料錯誤", cls: "bg-red-100 text-red-800 dark:bg-red-400/25 dark:text-red-300" },
 };
 
 export function StatusBadge({ status }: { status: AnalysisStatus }) {

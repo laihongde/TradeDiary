@@ -9,7 +9,7 @@ import {
   createSeriesMarkers,
 } from "lightweight-charts";
 import type { CandlestickData, Time } from "lightweight-charts";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getCandles } from "../api/client";
 import { Loading } from "./ui";
 
@@ -37,6 +37,18 @@ export function CandlestickChart({ symbol, analyses, days = 30 }: Props) {
   const ohlcRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<ReturnType<typeof createChart> | null>(null);
 
+  const [isDark, setIsDark] = useState(() =>
+    document.documentElement.classList.contains("dark")
+  );
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ["candles", symbol, days],
     queryFn: () => getCandles(symbol, days),
@@ -53,22 +65,27 @@ export function CandlestickChart({ symbol, analyses, days = 30 }: Props) {
     }
 
     const container = containerRef.current;
+    const bgColor = isDark ? "#0d1117" : "#ffffff";
+    const textColor = isDark ? "#9ca3af" : "#374151";
+    const gridColor = isDark ? "#1e2530" : "#f3f4f6";
+    const borderColor = isDark ? "#374151" : "#e5e7eb";
+
     const chart = createChart(container, {
       width: container.clientWidth,
       height: 420,
       layout: {
-        background: { type: ColorType.Solid, color: "#ffffff" },
-        textColor: "#374151",
+        background: { type: ColorType.Solid, color: bgColor },
+        textColor,
         fontSize: 11,
       },
       grid: {
-        vertLines: { color: "#f3f4f6" },
-        horzLines: { color: "#f3f4f6" },
+        vertLines: { color: gridColor },
+        horzLines: { color: gridColor },
       },
       crosshair: { mode: CrosshairMode.Normal },
-      rightPriceScale: { borderColor: "#e5e7eb" },
+      rightPriceScale: { borderColor },
       timeScale: {
-        borderColor: "#e5e7eb",
+        borderColor,
         timeVisible: true,
         secondsVisible: false,
         fixLeftEdge: true,
@@ -241,18 +258,18 @@ export function CandlestickChart({ symbol, analyses, days = 30 }: Props) {
       chart.remove();
       chartRef.current = null;
     };
-  }, [data, analyses]);
+  }, [data, analyses, isDark]);
 
   if (isLoading) return <Loading />;
   if (isError || !data?.candles?.length)
     return <p className="py-4 text-center text-sm text-gray-400">無法載入 K 線資料</p>;
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-[#0d1117]">
       {/* 標題列 + 圖例 */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3 border-b border-gray-100">
-        <span className="text-sm font-semibold text-gray-700">{symbol} 日 K 線</span>
-        <div className="flex items-center gap-3 text-xs text-gray-500">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3 border-b border-gray-100 dark:border-gray-700">
+        <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{symbol} 日 K 線</span>
+        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
           <span className="flex items-center gap-1">
             <span className="inline-block h-2 w-4 rounded" style={{ background: "#f59e0b" }} />
             MA5
@@ -266,13 +283,13 @@ export function CandlestickChart({ symbol, analyses, days = 30 }: Props) {
             MA20
           </span>
           <span className="flex items-center gap-1 text-red-500">▲ 看多</span>
-          <span className="flex items-center gap-1 text-green-600">▼ 看空</span>
+          <span className="flex items-center gap-1 text-green-600 dark:text-green-400">▼ 看空</span>
         </div>
       </div>
       {/* OHLC 資訊列 */}
       <div
         ref={ohlcRef}
-        className="flex flex-wrap items-center gap-x-4 gap-y-0.5 px-5 py-2 text-xs text-gray-600 bg-gray-50 border-b border-gray-100 min-h-[32px]"
+        className="flex flex-wrap items-center gap-x-4 gap-y-0.5 px-5 py-2 text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/60 border-b border-gray-100 dark:border-gray-700 min-h-[32px]"
       />
       {/* 圖表 */}
       <div ref={containerRef} className="w-full" />

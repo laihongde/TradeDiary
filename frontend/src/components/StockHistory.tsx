@@ -75,40 +75,40 @@ export function StockHistory() {
             ].map((card) => (
               <div
                 key={card.label}
-                className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
+                className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800"
               >
-                <div className="mb-1 text-sm text-gray-500">{card.label}</div>
-                <div className="text-2xl font-bold text-gray-800">
+                <div className="mb-1 text-sm text-gray-500 dark:text-gray-400">{card.label}</div>
+                <div className="text-2xl font-bold text-gray-800 dark:text-gray-100">
                   {card.value}
                 </div>
                 {"sub" in card && card.sub && (
-                  <div className="mt-1 text-xs text-gray-400">{card.sub}</div>
+                  <div className="mt-1 text-xs text-gray-400 dark:text-gray-500">{card.sub}</div>
                 )}
               </div>
             ))}
           </div>
 
           {/* 歷史紀錄表 */}
-          <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-4 sm:py-3">
+                <tr className="border-b border-gray-100 dark:border-gray-700">
+                  <th className="whitespace-nowrap px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 sm:px-4 sm:py-3">
                     分析日期
                   </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-4 sm:py-3">
+                  <th className="whitespace-nowrap px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 sm:px-4 sm:py-3">
                     方向
                   </th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-4 sm:py-3">
+                  <th className="whitespace-nowrap px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 sm:px-4 sm:py-3">
                     分析價
                   </th>
-                  <th className="hidden px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 sm:table-cell sm:px-4 sm:py-3">
+                  <th className="hidden whitespace-nowrap px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 sm:table-cell sm:px-4 sm:py-3">
                     結算價
                   </th>
-                  <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-4 sm:py-3">
+                  <th className="whitespace-nowrap px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 sm:px-4 sm:py-3">
                     週期報酬
                   </th>
-                  <th className="px-3 py-2 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-4 sm:py-3">
+                  <th className="whitespace-nowrap px-3 py-2 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 sm:px-4 sm:py-3">
                     結果
                   </th>
                 </tr>
@@ -117,30 +117,30 @@ export function StockHistory() {
                 {data.analyses.map((a) => (
                   <tr
                     key={a.id}
-                    className="border-t border-gray-100 hover:bg-gray-50"
+                    className="border-t border-gray-100 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700/50"
                   >
-                    <td className="px-3 py-2 sm:px-4">{a.analysisDate}</td>
-                    <td className="px-3 py-2 sm:px-4">
+                    <td className="whitespace-nowrap px-3 py-2 text-gray-700 dark:text-gray-300 sm:px-4">{a.analysisDate}</td>
+                    <td className="whitespace-nowrap px-3 py-2 sm:px-4">
                       {a.direction === "BULLISH" ? (
-                        <span className="text-green-600">▲ 看多</span>
+                        <span className="text-green-600 dark:text-green-400">▲ 看多</span>
                       ) : (
-                        <span className="text-red-600">▼ 看空</span>
+                        <span className="text-red-600 dark:text-red-400">▼ 看空</span>
                       )}
                     </td>
-                    <td className="px-3 py-2 text-right sm:px-4">
+                    <td className="whitespace-nowrap px-3 py-2 text-right text-gray-700 dark:text-gray-300 sm:px-4">
                       {a.analysisPrice?.toFixed(2) ?? "-"}
                     </td>
-                    <td className="hidden px-3 py-2 text-right sm:table-cell sm:px-4">
+                    <td className="hidden whitespace-nowrap px-3 py-2 text-right text-gray-700 dark:text-gray-300 sm:table-cell sm:px-4">
                       {a.reviewPrice?.toFixed(2) ?? "-"}
                     </td>
-                    <td className="px-3 py-2 text-right sm:px-4">
+                    <td className="whitespace-nowrap px-3 py-2 text-right sm:px-4">
                       <ReturnBadge value={a.weekReturn} />
                     </td>
-                    <td className="px-3 py-2 text-center sm:px-4">
+                    <td className="whitespace-nowrap px-3 py-2 text-center sm:px-4">
                       {a.weekReturn != null ? (
                         <SuccessBadge value={a.isSuccess} />
                       ) : (
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-gray-400 dark:text-gray-500">
                           {a.status}
                         </span>
                       )}

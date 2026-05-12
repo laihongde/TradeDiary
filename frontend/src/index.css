@@ -4,7 +4,145 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
+
+/* ===== Dark Mode 全域配色 ===== */
+.dark body {
+  background-color: #0d1117;
+  color: #e6edf3;
+}
+.dark {
+  --dm-bg:         #0d1117;
+  --dm-surface:    #161b22;
+  --dm-surface2:   #1c2128;
+  --dm-border:     #30363d;
+  --dm-text:       #e6edf3;
+  --dm-text-muted: #8b949e;
+  --dm-blue:       #58a6ff;
+  --dm-green:      #3fb950;
+  --dm-red:        #f85149;
+}
+
+/* 背景 */
+.dark .min-h-screen { background-color: #0d1117 !important; }
+
+/* Header */
+.dark header {
+  background-color: #161b22 !important;
+  border-color: #30363d !important;
+}
+.dark header h1 { color: #e6edf3 !important; }
+.dark .header-tech::after {
+  background: linear-gradient(90deg, #58a6ff, #8b5cf6, #3fb950, #8b5cf6, #58a6ff) !important;
+}
+
+/* Tabs */
+.dark .tab-indicator-animate { color: #8b949e !important; }
+.dark .tab-indicator-animate.active { color: #58a6ff !important; border-color: #58a6ff !important; }
+.dark .tab-indicator-animate:hover:not(.active) { color: #c9d1d9 !important; }
+
+/* TopBar 按鈕 */
+.dark .btn-ripple {
+  background-color: #21262d !important;
+  color: #c9d1d9 !important;
+}
+.dark .btn-ripple:hover { background-color: #30363d !important; }
+
+/* 卡片 */
+.dark .rounded-xl, .dark .rounded-lg {
+  background-color: #161b22 !important;
+  border-color: #30363d !important;
+  color: #e6edf3 !important;
+}
+.dark .card-glow:hover {
+  box-shadow: 0 0 0 1px rgba(88,166,255,0.3), 0 4px 24px rgba(88,166,255,0.12) !important;
+  border-color: rgba(88,166,255,0.4) !important;
+}
+
+/* 文字 */
+.dark .text-gray-800, .dark .text-gray-900 { color: #e6edf3 !important; }
+.dark .text-gray-700 { color: #c9d1d9 !important; }
+.dark .text-gray-600 { color: #8b949e !important; }
+.dark .text-gray-500 { color: #8b949e !important; }
+.dark .text-gray-400 { color: #6e7681 !important; }
+
+/* 背景色 */
+.dark .bg-gray-50 { background-color: #0d1117 !important; }
+.dark .bg-gray-100 { background-color: #21262d !important; }
+.dark .bg-gray-200 { background-color: #30363d !important; }
+.dark .bg-white { background-color: #161b22 !important; }
+/* blue badges/pills: 亮底色 + 亮文字，在深色背景才看得清楚 */
+.dark .bg-blue-50 { background-color: rgba(88,166,255,0.18) !important; }
+.dark .text-blue-700 { color: #93c5fd !important; }
+.dark .text-blue-500 { color: #60a5fa !important; }
+.dark .bg-green-50 { background-color: rgba(63,185,80,0.15) !important; }
+.dark .text-green-700 { color: #6ee7b7 !important; }
+.dark .bg-amber-50 { background-color: rgba(255,179,0,0.15) !important; }
+.dark .text-amber-700 { color: #fcd34d !important; }
+.dark .bg-red-50 { background-color: rgba(248,81,73,0.15) !important; }
+.dark .text-red-600 { color: #f87171 !important; }
+.dark .text-red-500 { color: #f87171 !important; }
+/* 追蹤週期按鈕 active */
+.dark .bg-blue-600 { background-color: #1d4ed8 !important; }
+/* 圓點指示器 */
+.dark .bg-blue-500 { background-color: #3b82f6 !important; }
+
+/* 邊框 */
+.dark .border-gray-200 { border-color: #30363d !important; }
+.dark .border-gray-300 { border-color: #30363d !important; }
+.dark .border-gray-100 { border-color: #21262d !important; }
+.dark .border-amber-200 { border-color: rgba(255,179,0,0.3) !important; }
+.dark .border-green-200 { border-color: rgba(63,185,80,0.3) !important; }
+
+/* Input / Select */
+.dark input, .dark select, .dark textarea {
+  background-color: #0d1117 !important;
+  border-color: #30363d !important;
+  color: #e6edf3 !important;
+}
+.dark input::placeholder, .dark textarea::placeholder { color: #6e7681 !important; }
+
+/* Table */
+.dark table { background-color: #161b22 !important; }
+.dark tr.hover\:bg-gray-50:hover { background-color: #1c2128 !important; }
+.dark thead { background-color: #161b22 !important; }
+
+/* Badge */
+.dark .text-blue-600 { color: #58a6ff !important; }
+.dark .text-green-600 { color: #3fb950 !important; }
+.dark .text-amber-700 { color: #fcd34d !important; }
+/* 邊框 - badge border */
+.dark .border-blue-600 { border-color: #3b82f6 !important; }
+.dark .border-amber-200 { border-color: rgba(255,179,0,0.35) !important; }
+.dark .border-green-200 { border-color: rgba(63,185,80,0.35) !important; }
+
+/* details */
+.dark details summary { color: #8b949e !important; }
+
+/* ===== Dark Mode 切換按鈕 ===== */
+.theme-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #374151;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+.dark .theme-toggle {
+  border-color: #30363d;
+  background: #21262d;
+  color: #c9d1d9;
+}
+.theme-toggle:hover { border-color: #93c5fd; }
 
 /* ===== Splash Screen ===== */
 .splash-root {
@@ -289,21 +427,57 @@ body {
   position: relative;
   overflow: hidden;
 }
+/* 第1條 */
 .scan-line::before {
   content: "";
   position: absolute;
   left: 0;
-  top: -100%;
+  top: -120px;
   width: 100%;
-  height: 60px;
-  background: linear-gradient(to bottom, transparent, rgba(99,102,241,0.04), transparent);
-  animation: scan 5s linear infinite;
+  height: 120px;
+  background: linear-gradient(to bottom, transparent, rgba(99,102,241,0.10), rgba(99,102,241,0.06), transparent);
+  animation: scan1 7s linear infinite;
   pointer-events: none;
   z-index: 0;
 }
-@keyframes scan {
-  from { top: -60px; }
-  to   { top: 100%; }
+/* 第2條 */
+.scan-line::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: -120px;
+  width: 100%;
+  height: 80px;
+  background: linear-gradient(to bottom, transparent, rgba(56,189,248,0.09), transparent);
+  animation: scan1 7s linear 2.4s infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+body::before {
+  content: "";
+  position: fixed;
+  left: 0;
+  top: -80px;
+  width: 100%;
+  height: 80px;
+  background: linear-gradient(to bottom, transparent, rgba(52,211,153,0.07), transparent);
+  animation: scan1 7s linear 4.8s infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+/* Dark mode: 掃描線更明顯 */
+.dark .scan-line::before {
+  background: linear-gradient(to bottom, transparent, rgba(88,166,255,0.18), rgba(88,166,255,0.10), transparent);
+}
+.dark .scan-line::after {
+  background: linear-gradient(to bottom, transparent, rgba(56,189,248,0.16), transparent);
+}
+.dark body::before {
+  background: linear-gradient(to bottom, transparent, rgba(63,185,80,0.14), transparent);
+}
+@keyframes scan1 {
+  from { top: -120px; }
+  to   { top: 110vh; }
 }
 
 /* ===== 按鈕 ripple effect ===== */

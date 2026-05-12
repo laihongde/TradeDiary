@@ -5,3 +5,188 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
+
+/* ===== Splash Screen ===== */
+.splash-root {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at 60% 40%, #0f1b3d 0%, #05050f 70%);
+  animation: splash-fadeout 0.6s ease-in 2.2s forwards;
+}
+
+@keyframes splash-fadeout {
+  to { opacity: 0; pointer-events: none; }
+}
+
+.splash-canvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* 光暈球 */
+.splash-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.35;
+  animation: orb-float 6s ease-in-out infinite;
+}
+.splash-orb-1 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, #4f46e5, transparent 70%);
+  top: -80px; left: -80px;
+  animation-delay: 0s;
+}
+.splash-orb-2 {
+  width: 320px; height: 320px;
+  background: radial-gradient(circle, #0ea5e9, transparent 70%);
+  bottom: -60px; right: -60px;
+  animation-delay: -2s;
+}
+.splash-orb-3 {
+  width: 260px; height: 260px;
+  background: radial-gradient(circle, #10b981, transparent 70%);
+  top: 40%; left: 55%;
+  animation-delay: -4s;
+}
+@keyframes orb-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%       { transform: translate(20px, -20px) scale(1.08); }
+}
+
+/* 中央內容 */
+.splash-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* 圖示 */
+.splash-icon-wrap {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  animation: icon-pop 0.7s cubic-bezier(.22,1.6,.6,1) 0.1s both;
+}
+@keyframes icon-pop {
+  from { opacity: 0; transform: scale(0.4) rotate(-20deg); }
+  to   { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+.splash-icon {
+  width: 96px;
+  height: 96px;
+  filter: drop-shadow(0 0 12px #818cf8);
+}
+.splash-chart-line {
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  animation: draw-line 1s ease-out 0.3s forwards;
+}
+@keyframes draw-line {
+  to { stroke-dashoffset: 0; }
+}
+.splash-icon-glow {
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(129,140,248,0.4), transparent 70%);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.15); }
+}
+
+/* 標題字母 */
+.splash-title {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  background: linear-gradient(90deg, #38bdf8, #818cf8, #34d399, #818cf8, #38bdf8);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer-text 3s linear infinite;
+}
+@keyframes shimmer-text {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+.splash-letter {
+  display: inline-block;
+  opacity: 0;
+  animation: letter-drop 0.5s cubic-bezier(.22,1.4,.6,1) forwards;
+}
+@keyframes letter-drop {
+  from { opacity: 0; transform: translateY(-24px) scale(0.7); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* 副標 */
+.splash-subtitle {
+  font-size: 0.85rem;
+  letter-spacing: 0.35em;
+  color: #64748b;
+  text-transform: uppercase;
+  opacity: 0;
+  animation: fade-up 0.6s ease 1.2s forwards;
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 載入條 */
+.splash-bar-wrap {
+  width: 220px;
+  height: 3px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+  opacity: 0;
+  animation: fade-up 0.4s ease 1.4s forwards;
+}
+.splash-bar {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #38bdf8, #818cf8, #34d399);
+  background-size: 200% 100%;
+  animation: bar-fill 2s cubic-bezier(.4,0,.2,1) 1.4s forwards,
+             shimmer-bar 1.5s linear 1.4s infinite;
+  width: 0%;
+}
+@keyframes bar-fill {
+  to { width: 100%; }
+}
+@keyframes shimmer-bar {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* 跑動數字 */
+.splash-ticker {
+  display: flex;
+  gap: 16px;
+  opacity: 0;
+  animation: fade-up 0.5s ease 1.6s forwards;
+}
+.splash-tick-item {
+  font-size: 0.75rem;
+  font-family: monospace;
+  color: #34d399;
+  opacity: 0;
+  animation: tick-pop 0.4s ease forwards;
+}
+.splash-tick-item:nth-child(even) { color: #f87171; }
+@keyframes tick-pop {
+  from { opacity: 0; transform: scale(0.8) translateY(6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}

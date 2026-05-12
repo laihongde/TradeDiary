@@ -8,6 +8,7 @@ import { ErrorList } from "./components/ErrorList";
 import { LocalOnlyNotice } from "./components/LocalOnlyNotice";
 import { PendingSection } from "./components/PendingSection";
 import { ReviewSection } from "./components/ReviewSection";
+import { SplashScreen } from "./components/SplashScreen";
 import { StockHistory } from "./components/StockHistory";
 import { useRefreshAllLatest, useUpdateStatuses } from "./hooks/useAnalyses";
 
@@ -56,8 +57,11 @@ function TopBar() {
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("today");
+  const [showSplash, setShowSplash] = useState(true);
 
   return (
+    <>
+      {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
     <div className="min-h-screen bg-gray-50">
       <LocalOnlyNotice />
 
@@ -124,5 +128,6 @@ export default function App() {
         {tab === "sources" && <DataSourceStatus />}
       </main>
     </div>
+    </>
   );
 }

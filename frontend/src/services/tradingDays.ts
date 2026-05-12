@@ -51,43 +51,60 @@ export function isTradingDay(iso: string): boolean {
   return !TAIWAN_HOLIDAYS.has(iso);
 }
 
-export function getReviewDate(analysisDate: string): string {
+export function getReviewDate(analysisDate: string, n?: number): string {
+  const target = n ?? REVIEW_TRADING_DAYS;
   let tradingDays = 0;
   let current = analysisDate;
-  while (tradingDays < REVIEW_TRADING_DAYS) {
+  while (tradingDays < target) {
     current = addDays(current, 1);
     if (isTradingDay(current)) tradingDays++;
   }
   return current;
 }
 
-export function shouldBeReadyToReview(analysisDate: string, today?: string): boolean {
+export function shouldBeReadyToReview(
+  analysisDate: string,
+  today?: string,
+  n?: number,
+): boolean {
   const t = today ?? toIsoDate(new Date());
-  return t >= getReviewDate(analysisDate);
+  return t >= getReviewDate(analysisDate, n);
 }
 
-export function daysUntilReview(analysisDate: string, today?: string): number {
+export function daysUntilReview(
+  analysisDate: string,
+  today?: string,
+  n?: number,
+): number {
   const t = today ?? toIsoDate(new Date());
-  return diffDays(t, getReviewDate(analysisDate));
+  return diffDays(t, getReviewDate(analysisDate, n));
 }
 
 // 台灣時間（UTC+8）的今日日期
 export function todayInTaiwan(): string {
   const now = new Date();
-  const tw = new Date(now.getTime() + (8 * 60 + now.getTimezoneOffset()) * 60_000);
+  const tw = new Date(
+    now.getTime() + (8 * 60 + now.getTimezoneOffset()) * 60_000,
+  );
   return toIsoDate(tw);
 }
 
 export function isPastReviewCutoff(reviewDate: string): boolean {
   const now = new Date();
-  const tw = new Date(now.getTime() + (8 * 60 + now.getTimezoneOffset()) * 60_000);
+  const tw = new Date(
+    now.getTime() + (8 * 60 + now.getTimezoneOffset()) * 60_000,
+  );
   const todayTw = toIsoDate(tw);
   if (todayTw > reviewDate) return true;
-  if (todayTw === reviewDate && tw.getHours() >= REVIEW_CUTOFF_HOUR) return true;
+  if (todayTw === reviewDate && tw.getHours() >= REVIEW_CUTOFF_HOUR)
+    return true;
   return false;
 }
 
-export function daysSinceAnalysis(analysisDate: string, today?: string): number {
+export function daysSinceAnalysis(
+  analysisDate: string,
+  today?: string,
+): number {
   const t = today ?? toIsoDate(new Date());
   return diffDays(analysisDate, t);
 }

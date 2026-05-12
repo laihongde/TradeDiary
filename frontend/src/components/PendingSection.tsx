@@ -23,33 +23,28 @@ import {
   Td,
   Th,
 } from "./ui";
+import {
+  getReviewDate as calcReviewDate,
+  parseIsoDate,
+  toIsoDate,
+} from "../services/tradingDays";
 
-function getReviewDate(from: Date): Date {
-  let tradingDays = 0;
-  const current = new Date(from);
-  current.setHours(0, 0, 0, 0);
-  while (tradingDays < 5) {
-    current.setDate(current.getDate() + 1);
-    const dow = current.getDay();
-    if (dow !== 0 && dow !== 6) tradingDays++;
-  }
-  return current;
-}
-
-function daysUntilReview(analysisDate: string): number {
-  const reviewDate = getReviewDate(parseISO(analysisDate));
+function daysUntilReview(analysisDate: string, n: number): number {
+  const reviewDate = calcReviewDate(analysisDate, n);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  return Math.ceil((reviewDate.getTime() - today.getTime()) / 86400000);
+  const reviewD = parseIsoDate(reviewDate);
+  return Math.ceil((reviewD.getTime() - today.getTime()) / 86400000);
 }
 
 /** 結算日已過，或結算日當天已超過 18:00（台北時間）*/
-function isPastCutoff(analysisDate: string): boolean {
-  const reviewDate = getReviewDate(parseISO(analysisDate));
+function isPastCutoff(analysisDate: string, n: number): boolean {
+  const reviewDate = calcReviewDate(analysisDate, n);
+  const reviewD = parseIsoDate(reviewDate);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  if (reviewDate < today) return true;
-  if (reviewDate.getTime() === today.getTime()) {
+  if (reviewD < today) return true;
+  if (reviewD.getTime() === today.getTime()) {
     const taipeiHour = new Date(
       new Date().toLocaleString("en-US", { timeZone: "Asia/Taipei" })
     ).getHours();
@@ -58,13 +53,17 @@ function isPastCutoff(analysisDate: string): boolean {
   return false;
 }
 
+// suppress unused import warning – toIsoDate used indirectly via calcReviewDate
+void toIsoDate;
+
 function PendingRow({ analysis }: { analysis: StockAnalysis }) {
   const fetchReview = useFetchReview();
   const refreshLatest = useRefreshLatest();
   const deleteAnalysis = useDeleteAnalysis();
   const [editing, setEditing] = useState(false);
-  const remaining = daysUntilReview(analysis.analysisDate);
-  const canReview = isPastCutoff(analysis.analysisDate);
+  const n = analysis.trackingTradingDays ?? 5;
+  const remaining = daysUntilReview(analysis.analysisDate, n);
+  const canReview = isPastCutoff(analysis.analysisDate, n);
 
   function handleDelete() {
     if (window.confirm(`確定要刪除 ${analysis.symbol} (${analysis.analysisDate.split("T")[0]}) 的分析紀錄嗎？`)) {
@@ -103,6 +102,9 @@ function PendingRow({ analysis }: { analysis: StockAnalysis }) {
           ) : (
             <span className="text-gray-400">今日 18:00 後</span>
           )}
+        </Td>
+        <Td>
+          <span className="text-xs text-gray-500">追蹤 {n} 日</span>
         </Td>
         <Td>
           <StatusBadge status={analysis.status} />
@@ -171,7 +173,8 @@ export function PendingSection() {
               <Th>分析價</Th>
               <Th>最新價</Th>
               <Th>浮動報酬</Th>
-              <Th>距5交易日</Th>
+              <Th>距結算日</Th>
+              <Th>追蹤週期</Th>
               <Th>狀態</Th>
               <Th>備註</Th>
               <Th>操作</Th>

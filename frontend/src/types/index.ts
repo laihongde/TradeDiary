@@ -41,7 +41,10 @@ export interface StockAnalysis {
   dataSourceNote?: string;
   analysisPriceSource?: PriceSource;
 
-  // 結算（第 5 個交易日）
+  // 追蹤週期設定（預設 5）
+  trackingTradingDays?: number;
+
+  // 結算（第 N 個交易日）
   reviewDate?: string;
   reviewPrice?: number;
   reviewActualDate?: string;
@@ -68,6 +71,7 @@ export interface CreateAnalysisInput {
   tags?: string[];
   target_price?: number;
   stop_loss_price?: number;
+  tracking_trading_days?: number;
 }
 
 export interface SummaryStats {
@@ -131,6 +135,15 @@ export interface Candle {
   low: number;
   close: number;
   volume: number;
+}
+
+export interface TrackingDaysGroupStats {
+  trackingTradingDays: number;
+  total: number;
+  success: number;
+  failed: number;
+  win_rate?: number;
+  avg_return?: number;
 }
 
 export interface ProviderHealthEntry {

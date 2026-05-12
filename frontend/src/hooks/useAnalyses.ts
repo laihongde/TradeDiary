@@ -12,6 +12,7 @@ export const QUERY_KEYS = {
   period: (p: string) => ["statistics", "period", p],
   stock: (sym: string) => ["analyses", "stock", sym],
   stockStats: (sym: string) => ["statistics", "stock", sym],
+  trackingDaysStats: ["statistics", "trackingDays"],
 };
 
 export function useTodayAnalyses() {
@@ -53,6 +54,13 @@ export function usePeriodStats(period: string) {
   return useQuery({
     queryKey: QUERY_KEYS.period(period),
     queryFn: () => api.getPeriodStats(period),
+  });
+}
+
+export function useStatsByTrackingDays() {
+  return useQuery({
+    queryKey: QUERY_KEYS.trackingDaysStats,
+    queryFn: () => api.getStatsByTrackingDays(),
   });
 }
 
@@ -126,8 +134,13 @@ export function useRetrySnapshot() {
 export function useUpdateAnalysis() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof api.updateAnalysis>[1] }) =>
-      api.updateAnalysis(id, data),
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Parameters<typeof api.updateAnalysis>[1];
+    }) => api.updateAnalysis(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["analyses"] });
       qc.invalidateQueries({ queryKey: ["statistics"] });

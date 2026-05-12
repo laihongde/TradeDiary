@@ -1,6 +1,10 @@
 import { listAll, patch } from "../db/analyses";
 import { getSetting, setSetting } from "../db/settings";
-import { fetchDailyClose, fetchLatest, formatAttempts } from "../providers/dispatcher";
+import {
+  fetchDailyClose,
+  fetchLatest,
+  formatAttempts,
+} from "../providers/dispatcher";
 import type { StockAnalysis } from "../types";
 import { calculateReturn, determineSuccess } from "./analysis";
 import {
@@ -30,9 +34,15 @@ export async function runStatusTransitions(): Promise<void> {
   const all = await listAll();
   const today = todayInTaiwan();
   for (const a of all) {
-    if (a.status === "PENDING" && shouldBeReadyToReview(a.analysisDate, today)) {
+    if (
+      a.status === "PENDING" &&
+      shouldBeReadyToReview(a.analysisDate, today, a.trackingTradingDays ?? 5)
+    ) {
       const elapsed = countTradingDaysBetween(a.analysisDate, today);
-      await patch(a.id, { status: "READY_TO_REVIEW", elapsedTradingDays: elapsed });
+      await patch(a.id, {
+        status: "READY_TO_REVIEW",
+        elapsedTradingDays: elapsed,
+      });
     }
   }
 }
@@ -43,25 +53,33 @@ export async function runFetchReviewForDue(): Promise<void> {
   for (const a of all) {
     if (a.status !== "READY_TO_REVIEW") continue;
     if (a.reviewPrice != null) continue;
-    const reviewDate = a.reviewDate ?? getReviewDate(a.analysisDate);
+    const reviewDate =
+      a.reviewDate ?? getReviewDate(a.analysisDate, a.trackingTradingDays ?? 5);
     if (!isPastReviewCutoff(reviewDate)) continue;
     await fetchAndSaveReviewPrice(a.id);
   }
 }
 
-export async function fetchAndSaveReviewPrice(id: string): Promise<StockAnalysis | null> {
+export async function fetchAndSaveReviewPrice(
+  id: string,
+): Promise<StockAnalysis | null> {
   const all = await listAll();
   const a = all.find((x) => x.id === id);
   if (!a) return null;
   if (a.reviewPrice != null) return a; // 鎖死
-  const reviewDate = a.reviewDate ?? getReviewDate(a.analysisDate);
+  const reviewDate =
+    a.reviewDate ?? getReviewDate(a.analysisDate, a.trackingTradingDays ?? 5);
   const result = await fetchDailyClose({ symbol: a.symbol, date: reviewDate });
 
   if (result.kind === "ok") {
     const reviewPrice = result.record.price;
     const analysisPrice = a.analysisPrice ?? 0;
-    const weekReturn = analysisPrice > 0 ? calculateReturn(analysisPrice, reviewPrice) : 0;
-    const isSuccess = analysisPrice > 0 ? determineSuccess(a.direction, analysisPrice, reviewPrice) : false;
+    const weekReturn =
+      analysisPrice > 0 ? calculateReturn(analysisPrice, reviewPrice) : 0;
+    const isSuccess =
+      analysisPrice > 0
+        ? determineSuccess(a.direction, analysisPrice, reviewPrice)
+        : false;
     return patch(id, {
       reviewPrice,
       reviewActualDate: result.record.actualDate,
@@ -88,7 +106,9 @@ export async function runRefreshLatest(): Promise<void> {
   }
 }
 
-export async function refreshLatestForAnalysis(id: string): Promise<StockAnalysis | null> {
+export async function refreshLatestForAnalysis(
+  id: string,
+): Promise<StockAnalysis | null> {
   const all = await listAll();
   const a = all.find((x) => x.id === id);
   if (!a) return null;
@@ -100,7 +120,8 @@ export async function refreshLatestForAnalysis(id: string): Promise<StockAnalysi
   }
   const latestPrice = result.record.price;
   const analysisPrice = a.analysisPrice ?? 0;
-  const latestReturn = analysisPrice > 0 ? calculateReturn(analysisPrice, latestPrice) : 0;
+  const latestReturn =
+    analysisPrice > 0 ? calculateReturn(analysisPrice, latestPrice) : 0;
   const today = todayInTaiwan();
   return patch(id, {
     latestPrice,

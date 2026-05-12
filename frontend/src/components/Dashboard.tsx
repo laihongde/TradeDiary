@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { usePeriodStats, useSummaryStats } from "../hooks/useAnalyses";
+import { usePeriodStats, useStatsByTrackingDays, useSummaryStats } from "../hooks/useAnalyses";
 import { ReturnBadge } from "./ui";
 
 function StatCard({
@@ -42,6 +42,7 @@ export function Dashboard() {
   const summary = useSummaryStats();
   const [period, setPeriod] = useState("this_month");
   const periodStats = usePeriodStats(period);
+  const trackingDaysStats = useStatsByTrackingDays();
 
   const s = summary.data;
   const p = periodStats.data;
@@ -51,13 +52,13 @@ export function Dashboard() {
       {/* 總覽卡片 */}
       <div>
         <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
-          整體表現（所有已完成一週檢視）
+          整體表現（所有已完成週期檢視）
         </h3>
         {s ? (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <StatCard label="總分析筆數" value={s.total} />
             <StatCard
-              label="一週勝率"
+              label="週期勝率"
               value={s.win_rate != null ? `${s.win_rate.toFixed(1)}%` : "-"}
               sub={`${s.success} 成功 / ${s.failed} 失敗`}
               highlight={
@@ -69,7 +70,7 @@ export function Dashboard() {
               }
             />
             <StatCard
-              label="平均一週報酬"
+              label="平均週期報鈅"
               value={s.avg_return != null ? `${s.avg_return > 0 ? "+" : ""}${s.avg_return.toFixed(2)}%` : "-"}
               highlight={
                 s.avg_return != null
@@ -181,6 +182,57 @@ export function Dashboard() {
           </div>
         ) : (
           <div className="text-gray-400">載入中...</div>
+        )}
+      </div>
+
+      {/* 依追蹤週期分組 */}
+      <div>
+        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
+          依追蹤週期分組表現
+        </h3>
+        {trackingDaysStats.data && trackingDaysStats.data.length > 0 ? (
+          <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 text-left text-xs text-gray-500">
+                  <th className="px-4 py-2 font-medium">追蹤週期</th>
+                  <th className="px-4 py-2 font-medium text-right">筆數</th>
+                  <th className="px-4 py-2 font-medium text-right">週期勝率</th>
+                  <th className="px-4 py-2 font-medium text-right">平均週期報酬</th>
+                  <th className="px-4 py-2 font-medium text-right">成功 / 失敗</th>
+                </tr>
+              </thead>
+              <tbody>
+                {trackingDaysStats.data.map((g) => (
+                  <tr key={g.trackingTradingDays} className="border-t border-gray-100 hover:bg-gray-50">
+                    <td className="px-4 py-2 font-medium">追蹤 {g.trackingTradingDays} 個交易日</td>
+                    <td className="px-4 py-2 text-right">{g.total}</td>
+                    <td className={`px-4 py-2 text-right font-semibold ${
+                      g.win_rate == null ? "text-gray-400" : g.win_rate >= 50 ? "text-green-600" : "text-red-600"
+                    }`}>
+                      {g.win_rate != null ? `${g.win_rate.toFixed(1)}%` : "-"}
+                    </td>
+                    <td className={`px-4 py-2 text-right font-semibold ${
+                      g.avg_return == null ? "text-gray-400" : g.avg_return > 0 ? "text-green-600" : "text-red-600"
+                    }`}>
+                      {g.avg_return != null
+                        ? `${g.avg_return > 0 ? "+" : ""}${g.avg_return.toFixed(2)}%`
+                        : "-"}
+                    </td>
+                    <td className="px-4 py-2 text-right text-gray-500">
+                      <span className="text-green-600">{g.success}</span>
+                      {" / "}
+                      <span className="text-red-600">{g.failed}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : trackingDaysStats.isLoading ? (
+          <div className="text-gray-400">載入中...</div>
+        ) : (
+          <div className="text-gray-400 text-sm">尚無已完成週期檢視的分析</div>
         )}
       </div>
     </div>

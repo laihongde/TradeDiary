@@ -5,12 +5,15 @@ import type {
   StockAnalysis,
   StockStats,
   SummaryStats,
+  TrackingDaysGroupStats,
 } from "../types";
 import { roundTo } from "./analysis";
 import { addDays, todayInTaiwan } from "./tradingDays";
 
 function isCounted(a: StockAnalysis): boolean {
-  return (a.status === "REVIEWED" || a.status === "TRACKING") && a.weekReturn != null;
+  return (
+    (a.status === "REVIEWED" || a.status === "TRACKING") && a.weekReturn != null
+  );
 }
 
 function winRate(success: number, total: number): number | undefined {
@@ -18,7 +21,9 @@ function winRate(success: number, total: number): number | undefined {
 }
 
 function avg(values: number[]): number | undefined {
-  return values.length ? roundTo(values.reduce((a, b) => a + b, 0) / values.length, 4) : undefined;
+  return values.length
+    ? roundTo(values.reduce((a, b) => a + b, 0) / values.length, 4)
+    : undefined;
 }
 
 function median(values: number[]): number | undefined {
@@ -52,13 +57,19 @@ export async function getSummary(): Promise<SummaryStats> {
   };
 }
 
-function resolvePeriod(period: string, from?: string, to?: string): { start: string; end: string } {
+function resolvePeriod(
+  period: string,
+  from?: string,
+  to?: string,
+): { start: string; end: string } {
   const today = todayInTaiwan();
   const todayDate = new Date(today);
   const dow = (todayDate.getDay() + 6) % 7; // Monday = 0
 
-  if (period === "this_week") return { start: addDays(today, -dow), end: today };
-  if (period === "last_week") return { start: addDays(today, -dow - 7), end: addDays(today, -dow - 1) };
+  if (period === "this_week")
+    return { start: addDays(today, -dow), end: today };
+  if (period === "last_week")
+    return { start: addDays(today, -dow - 7), end: addDays(today, -dow - 1) };
   if (period === "this_month") {
     const start = `${today.slice(0, 7)}-01`;
     return { start, end: today };
@@ -69,7 +80,11 @@ function resolvePeriod(period: string, from?: string, to?: string): { start: str
   return { start: fallback, end: today };
 }
 
-export async function getPeriodStats(period: string, from?: string, to?: string): Promise<PeriodStats> {
+export async function getPeriodStats(
+  period: string,
+  from?: string,
+  to?: string,
+): Promise<PeriodStats> {
   const { start, end } = resolvePeriod(period, from, to);
   const inRange = await listByDateRange(start, end);
 
@@ -94,13 +109,18 @@ export async function getPeriodStats(period: string, from?: string, to?: string)
     win_rate: winRate(success, completed.length),
     avg_return: avg(returns),
     best_stock: best?.symbol,
-    best_return: best?.weekReturn != null ? roundTo(best.weekReturn, 4) : undefined,
+    best_return:
+      best?.weekReturn != null ? roundTo(best.weekReturn, 4) : undefined,
     worst_stock: worst?.symbol,
-    worst_return: worst?.weekReturn != null ? roundTo(worst.weekReturn, 4) : undefined,
+    worst_return:
+      worst?.weekReturn != null ? roundTo(worst.weekReturn, 4) : undefined,
   };
 }
 
-export async function getDailyRecords(from?: string, to?: string): Promise<DailyRecord[]> {
+export async function getDailyRecords(
+  from?: string,
+  to?: string,
+): Promise<DailyRecord[]> {
   const today = todayInTaiwan();
   const start = from ?? addDays(today, -30);
   const end = to ?? today;
@@ -158,4 +178,36 @@ export async function getStockStats(symbol: string): Promise<StockStats> {
       status: a.status,
     })),
   };
+}
+
+export async function getStatsByTrackingDays(): Promise<
+  TrackingDaysGroupStats[]
+> {
+  const all = await listAll();
+  const reviewed = all.filter(isCounted);
+
+  const groupMap = new Map<number, StockAnalysis[]>();
+  for (const a of reviewed) {
+    const key = a.trackingTradingDays ?? 5;
+    const list = groupMap.get(key) ?? [];
+    list.push(a);
+    groupMap.set(key, list);
+  }
+
+  const result: TrackingDaysGroupStats[] = [];
+  for (const [days, list] of groupMap) {
+    const success = list.filter((a) => a.isSuccess === true).length;
+    const returns = list.map((a) => a.weekReturn as number);
+    result.push({
+      trackingTradingDays: days,
+      total: list.length,
+      success,
+      failed: list.length - success,
+      win_rate: winRate(success, list.length),
+      avg_return: avg(returns),
+    });
+  }
+
+  result.sort((a, b) => a.trackingTradingDays - b.trackingTradingDays);
+  return result;
 }

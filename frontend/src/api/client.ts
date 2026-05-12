@@ -2,7 +2,12 @@
 // 讓 hooks 與 component 無需改動。實作改為 IndexedDB + provider dispatcher。
 
 import * as db from "../db/analyses";
-import { fetchCandles, fetchDailyClose, fetchLatest, formatAttempts } from "../providers/dispatcher";
+import {
+  fetchCandles,
+  fetchDailyClose,
+  fetchLatest,
+  formatAttempts,
+} from "../providers/dispatcher";
 import { buildManualPriceRecord } from "../providers/manual";
 import {
   refreshLatestForAnalysis,
@@ -14,6 +19,7 @@ import {
   getPeriodStats as svcPeriodStats,
   getStockStats as svcStockStats,
   getSummary as svcSummary,
+  getStatsByTrackingDays as svcStatsByTrackingDays,
 } from "../services/statistics";
 import { calculateReturn, determineSuccess } from "../services/analysis";
 import {
@@ -30,6 +36,7 @@ import type {
   StockAnalysis,
   StockStats,
   SummaryStats,
+  TrackingDaysGroupStats,
 } from "../types";
 
 // ── Analyses ──────────────────────────────────────────────────────────────────
@@ -38,7 +45,9 @@ export async function getToday(): Promise<StockAnalysis[]> {
   return db.listByDate(todayInTaiwan());
 }
 
-export async function getAnalysesByDate(date: string): Promise<StockAnalysis[]> {
+export async function getAnalysesByDate(
+  date: string,
+): Promise<StockAnalysis[]> {
   return db.listByDate(date);
 }
 
@@ -54,7 +63,9 @@ export async function getErrors(): Promise<StockAnalysis[]> {
   return db.listByStatuses(["DATA_ERROR"]);
 }
 
-export async function getStockHistory(symbol: string): Promise<StockAnalysis[]> {
+export async function getStockHistory(
+  symbol: string,
+): Promise<StockAnalysis[]> {
   return db.listBySymbol(symbol.trim().toUpperCase());
 }
 
@@ -63,7 +74,9 @@ export async function getStockHistory(symbol: string): Promise<StockAnalysis[]> 
 // 2. 同日不超過 3 筆
 // 3. dispatcher 抓當日價格；全失敗則建立 DATA_ERROR 紀錄保留使用者輸入
 
-export async function createAnalysis(data: CreateAnalysisInput): Promise<StockAnalysis> {
+export async function createAnalysis(
+  data: CreateAnalysisInput,
+): Promise<StockAnalysis> {
   const sym = data.symbol.trim().toUpperCase();
   const date = data.analysis_date || todayInTaiwan();
 
@@ -71,10 +84,12 @@ export async function createAnalysis(data: CreateAnalysisInput): Promise<StockAn
   if (dup) throw new ClientError(`${date} 已新增過 ${sym}`);
 
   const sameDay = await db.listByDate(date);
-  if (sameDay.length >= 3) throw new ClientError(`${date} 已達每日 3 支股票上限`);
+  if (sameDay.length >= 3)
+    throw new ClientError(`${date} 已達每日 3 支股票上限`);
 
   const direction: Direction = data.direction ?? "BULLISH";
-  const reviewDate = getReviewDate(date);
+  const trackingTradingDays = data.tracking_trading_days ?? 5;
+  const reviewDate = getReviewDate(date, trackingTradingDays);
   const dispatch = await fetchDailyClose({ symbol: sym, date });
 
   const base: Omit<StockAnalysis, "id" | "createdAt" | "updatedAt"> = {
@@ -88,6 +103,7 @@ export async function createAnalysis(data: CreateAnalysisInput): Promise<StockAn
     status: "PENDING",
     dataStatus: "UNKNOWN",
     reviewDate,
+    trackingTradingDays,
   };
 
   if (dispatch.kind === "ok") {
@@ -128,7 +144,10 @@ export type UpdateAnalysisData = Partial<{
   stop_loss_price: number;
 }>;
 
-export async function updateAnalysis(id: string, data: UpdateAnalysisData): Promise<StockAnalysis> {
+export async function updateAnalysis(
+  id: string,
+  data: UpdateAnalysisData,
+): Promise<StockAnalysis> {
   const existing = await db.get(id);
   if (!existing) throw new ClientError(`找不到紀錄 ${id}`);
 
@@ -137,7 +156,8 @@ export async function updateAnalysis(id: string, data: UpdateAnalysisData): Prom
   if (data.tags !== undefined) changes.tags = data.tags;
   if (data.direction) changes.direction = data.direction as Direction;
   if (data.target_price !== undefined) changes.targetPrice = data.target_price;
-  if (data.stop_loss_price !== undefined) changes.stopLossPrice = data.stop_loss_price;
+  if (data.stop_loss_price !== undefined)
+    changes.stopLossPrice = data.stop_loss_price;
   if (data.status) changes.status = data.status as StockAnalysis["status"];
 
   // 手動補 reviewPrice（僅在尚未存在時生效，由 patch 鎖死）
@@ -152,11 +172,14 @@ export async function updateAnalysis(id: string, data: UpdateAnalysisData): Prom
     changes.reviewPriceSource = source;
     changes.reviewActualDate = source.actualDate;
     if (existing.analysisPrice != null) {
-      changes.weekReturn = calculateReturn(existing.analysisPrice, data.review_price);
+      changes.weekReturn = calculateReturn(
+        existing.analysisPrice,
+        data.review_price,
+      );
       changes.isSuccess = determineSuccess(
         existing.direction,
         existing.analysisPrice,
-        data.review_price
+        data.review_price,
       );
     }
     if (!changes.status) changes.status = "REVIEWED";
@@ -173,11 +196,15 @@ export async function updateStatuses(): Promise<void> {
   await runStatusTransitions();
 }
 
-export async function fetchReviewData(id: string): Promise<StockAnalysis | null> {
+export async function fetchReviewData(
+  id: string,
+): Promise<StockAnalysis | null> {
   return fetchAndSaveReviewPrice(id);
 }
 
-export async function refreshLatestPrice(id: string): Promise<StockAnalysis | null> {
+export async function refreshLatestPrice(
+  id: string,
+): Promise<StockAnalysis | null> {
   return refreshLatestForAnalysis(id);
 }
 
@@ -195,7 +222,10 @@ export async function retrySnapshot(id: string): Promise<StockAnalysis | null> {
   const a = await db.get(id);
   if (!a) return null;
   if (a.analysisPrice == null) {
-    const dispatch = await fetchDailyClose({ symbol: a.symbol, date: a.analysisDate });
+    const dispatch = await fetchDailyClose({
+      symbol: a.symbol,
+      date: a.analysisDate,
+    });
     if (dispatch.kind === "ok") {
       const r = dispatch.record;
       const today = todayInTaiwan();
@@ -225,18 +255,28 @@ export async function retrySnapshot(id: string): Promise<StockAnalysis | null> {
 // ── Statistics ────────────────────────────────────────────────────────────────
 
 export const getSummary = (): Promise<SummaryStats> => svcSummary();
-export const getPeriodStats = (period: string, from?: string, to?: string): Promise<PeriodStats> =>
-  svcPeriodStats(period, from, to);
-export const getDailyRecords = (from?: string, to?: string): Promise<DailyRecord[]> =>
-  svcDailyRecords(from, to);
-export const getStockStats = (symbol: string): Promise<StockStats> => svcStockStats(symbol);
+export const getPeriodStats = (
+  period: string,
+  from?: string,
+  to?: string,
+): Promise<PeriodStats> => svcPeriodStats(period, from, to);
+export const getDailyRecords = (
+  from?: string,
+  to?: string,
+): Promise<DailyRecord[]> => svcDailyRecords(from, to);
+export const getStockStats = (symbol: string): Promise<StockStats> =>
+  svcStockStats(symbol);
+export const getStatsByTrackingDays = (): Promise<TrackingDaysGroupStats[]> =>
+  svcStatsByTrackingDays();
 
 // ── Market data ───────────────────────────────────────────────────────────────
 
 export async function getQuote(symbol: string) {
   const result = await fetchLatest(symbol);
   if (result.kind !== "ok") {
-    throw new ClientError(`抓取最新價格失敗：${formatAttempts(result.attempts)}`);
+    throw new ClientError(
+      `抓取最新價格失敗：${formatAttempts(result.attempts)}`,
+    );
   }
   return {
     symbol,
@@ -250,7 +290,10 @@ export async function getQuote(symbol: string) {
   };
 }
 
-export async function getCandles(symbol: string, days = 60): Promise<{ symbol: string; candles: Candle[] }> {
+export async function getCandles(
+  symbol: string,
+  days = 60,
+): Promise<{ symbol: string; candles: Candle[] }> {
   const result = await fetchCandles(symbol, days);
   if (result.kind !== "ok" || !result.candles) {
     throw new ClientError(`抓取 K 線失敗：${formatAttempts(result.attempts)}`);
@@ -293,7 +336,11 @@ export async function recordManualPrice(args: {
     changes.reviewActualDate = args.actualDate;
     if (a.analysisPrice != null) {
       changes.weekReturn = calculateReturn(a.analysisPrice, args.price);
-      changes.isSuccess = determineSuccess(a.direction, a.analysisPrice, args.price);
+      changes.isSuccess = determineSuccess(
+        a.direction,
+        a.analysisPrice,
+        args.price,
+      );
     }
     changes.status = "REVIEWED";
   } else if (args.field === "latestPrice") {
@@ -307,7 +354,7 @@ export async function recordManualPrice(args: {
     throw new ClientError(
       args.field === "analysisPrice"
         ? "分析當日價格已存在，無法手動覆蓋"
-        : "結算價已存在，無法手動覆蓋"
+        : "結算價已存在，無法手動覆蓋",
     );
   }
 

@@ -68,6 +68,9 @@ function ReviewRow({ analysis }: { analysis: StockAnalysis }) {
         <Td>
           <SuccessBadge value={analysis.isSuccess} />
         </Td>
+        <Td className="text-xs text-gray-500">
+          {analysis.trackingTradingDays ?? 5} 日
+        </Td>
         <Td className="text-right">
           {analysis.latestPrice != null ? Number(analysis.latestPrice).toFixed(2) : "-"}
         </Td>
@@ -125,8 +128,9 @@ function ReviewTable({ analyses }: { analyses: StockAnalysis[] }) {
           <Th>方向</Th>
           <Th>分析價</Th>
           <Th>結算價</Th>
-          <Th>結算報酬</Th>
+          <Th>週期報鈅</Th>
           <Th>結果</Th>
+          <Th>追蹤週期</Th>
           <Th>最新價</Th>
           <Th>後續報酬</Th>
           <Th>天數</Th>

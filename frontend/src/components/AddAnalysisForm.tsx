@@ -25,6 +25,9 @@ export function AddAnalysisForm() {
   const [tags, setTags] = useState("");
   const [targetPrice, setTargetPrice] = useState("");
   const [stopLoss, setStopLoss] = useState("");
+  const [trackingDays, setTrackingDays] = useState<number>(5);
+  const [customDays, setCustomDays] = useState("");
+  const [useCustom, setUseCustom] = useState(false);
   const [error, setError] = useState("");
 
   const dateAnalyses = useAnalysesByDate(analysisDate);
@@ -48,6 +51,9 @@ export function AddAnalysisForm() {
 
     setError("");
     try {
+      const finalDays = useCustom
+        ? Math.max(1, parseInt(customDays, 10) || 5)
+        : trackingDays;
       await create.mutateAsync({
         symbol: sym,
         analysis_date: analysisDate,
@@ -56,6 +62,7 @@ export function AddAnalysisForm() {
         tags: tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
         target_price: targetPrice ? parseFloat(targetPrice) : undefined,
         stop_loss_price: stopLoss ? parseFloat(stopLoss) : undefined,
+        tracking_trading_days: finalDays,
       });
       setSymbol("");
       setNotes("");
@@ -158,6 +165,49 @@ export function AddAnalysisForm() {
             onChange={(e) => setNotes(e.target.value)}
             className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+
+          {/* 追蹤週期 */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs text-gray-500 whitespace-nowrap">追蹤週期</span>
+              {[1, 3, 5, 10, 20].map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => { setTrackingDays(d); setUseCustom(false); }}
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors ${
+                    !useCustom && trackingDays === d
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-white text-gray-600 border-gray-300 hover:border-blue-400"
+                  }`}
+                >
+                  {d} 日
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setUseCustom(true)}
+                className={`rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors ${
+                  useCustom
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-white text-gray-600 border-gray-300 hover:border-blue-400"
+                }`}
+              >
+                自訂
+              </button>
+              {useCustom && (
+                <input
+                  type="number"
+                  min="1"
+                  max="999"
+                  placeholder="天數"
+                  value={customDays}
+                  onChange={(e) => setCustomDays(e.target.value)}
+                  className="w-16 rounded-lg border border-gray-300 px-2 py-0.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              )}
+            </div>
+          </div>
 
           {/* 進階欄位 */}
           <details className="group">

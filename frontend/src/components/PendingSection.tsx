@@ -1,6 +1,6 @@
 import { format, parseISO } from "date-fns";
-import { Pencil, RefreshCw, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { ChevronDown, ChevronUp, ChevronsUpDown, Pencil, RefreshCw, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
 import {
   useDeleteAnalysis,
   useFetchReview,
@@ -29,6 +29,9 @@ import {
   toIsoDate,
 } from "../services/tradingDays";
 
+type SortKey = "date" | "return" | "price" | "latestPrice";
+type SortDir = "asc" | "desc";
+
 function daysUntilReview(analysisDate: string, n: number): number {
   const reviewDate = calcReviewDate(analysisDate, n);
   const today = new Date();
@@ -51,6 +54,31 @@ function isPastCutoff(analysisDate: string, n: number): boolean {
     return taipeiHour >= 18;
   }
   return false;
+}
+
+function sortAnalyses(list: StockAnalysis[], key: SortKey, dir: SortDir): StockAnalysis[] {
+  const mul = dir === "asc" ? 1 : -1;
+  return [...list].sort((a, b) => {
+    if (key === "date") {
+      return mul * a.analysisDate.localeCompare(b.analysisDate);
+    }
+    if (key === "return") {
+      const av = a.latestReturn != null ? Number(a.latestReturn) : -Infinity;
+      const bv = b.latestReturn != null ? Number(b.latestReturn) : -Infinity;
+      return mul * (av - bv);
+    }
+    if (key === "price") {
+      const av = a.analysisPrice != null ? Number(a.analysisPrice) : -Infinity;
+      const bv = b.analysisPrice != null ? Number(b.analysisPrice) : -Infinity;
+      return mul * (av - bv);
+    }
+    if (key === "latestPrice") {
+      const av = a.latestPrice != null ? Number(a.latestPrice) : -Infinity;
+      const bv = b.latestPrice != null ? Number(b.latestPrice) : -Infinity;
+      return mul * (av - bv);
+    }
+    return 0;
+  });
 }
 
 // suppress unused import warning – toIsoDate used indirectly via calcReviewDate
@@ -236,6 +264,30 @@ export function PendingSection() {
   const updateStatuses = useUpdateStatuses();
   const refreshAll = useRefreshAllLatest();
 
+  const [sortKey, setSortKey] = useState<SortKey>("date");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+
+  function handleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir(key === "date" ? "desc" : "desc");
+    }
+  }
+
+  const sorted = useMemo(
+    () => sortAnalyses(data ?? [], sortKey, sortDir),
+    [data, sortKey, sortDir]
+  );
+
+  function SortIcon({ k }: { k: SortKey }) {
+    if (sortKey !== k) return <ChevronsUpDown size={12} className="ml-0.5 inline opacity-40" />;
+    return sortDir === "asc"
+      ? <ChevronUp size={12} className="ml-0.5 inline text-blue-500" />
+      : <ChevronDown size={12} className="ml-0.5 inline text-blue-500" />;
+  }
+
   return (
     <Section
       title={`待追蹤區 ${data ? `(${data.length})` : ""}`}
@@ -256,9 +308,34 @@ export function PendingSection() {
         <Empty message="目前沒有待追蹤的分析" />
       ) : (
         <>
+          {/* 手機排序列 */}
+          <div className="mb-2 flex items-center gap-2 sm:hidden">
+            <span className="text-xs text-gray-500 dark:text-gray-400">排序：</span>
+          {(["日期", "報酬", "分析價", "最新價"] as const).map((label) => {
+            const keyMap: Record<string, SortKey> = { "日期": "date", "報酬": "return", "分析價": "price", "最新價": "latestPrice" };
+            const k = keyMap[label];
+              const active = sortKey === k;
+              return (
+                <button
+                  key={k}
+                  onClick={() => handleSort(k)}
+                  className={`flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors ${
+                    active
+                      ? "border-blue-500 bg-blue-500 text-white"
+                      : "border-gray-300 bg-white text-gray-600 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                  }`}
+                >
+                  {label}
+                  {active && (sortDir === "asc"
+                    ? <ChevronUp size={11} className="ml-0.5" />
+                    : <ChevronDown size={11} className="ml-0.5" />)}
+                </button>
+              );
+            })}
+          </div>
           {/* 手機卡片 */}
           <div className="space-y-2 sm:hidden">
-            {data.map((a) => (
+            {sorted.map((a) => (
               <PendingCard key={a.id} analysis={a} />
             ))}
           </div>
@@ -268,11 +345,31 @@ export function PendingSection() {
               <thead>
                 <tr>
                   <Th>股票</Th>
-                  <Th>分析日</Th>
+                  <Th
+                    className="cursor-pointer select-none hover:text-blue-600"
+                    onClick={() => handleSort("date")}
+                  >
+                    分析日<SortIcon k="date" />
+                  </Th>
                   <Th>方向</Th>
-                  <Th>分析價</Th>
-                  <Th>最新價</Th>
-                  <Th>浮動報酬</Th>
+                  <Th
+                    className="cursor-pointer select-none text-right hover:text-blue-600"
+                    onClick={() => handleSort("price")}
+                  >
+                    分析價<SortIcon k="price" />
+                  </Th>
+                  <Th
+                    className="cursor-pointer select-none text-right hover:text-blue-600"
+                    onClick={() => handleSort("latestPrice")}
+                  >
+                    最新價<SortIcon k="latestPrice" />
+                  </Th>
+                  <Th
+                    className="cursor-pointer select-none text-right hover:text-blue-600"
+                    onClick={() => handleSort("return")}
+                  >
+                    浮動報酬<SortIcon k="return" />
+                  </Th>
                   <Th>距結算日</Th>
                   <Th>追蹤週期</Th>
                   <Th>狀態</Th>
@@ -281,7 +378,7 @@ export function PendingSection() {
                 </tr>
               </thead>
               <tbody>
-                {data.map((a) => (
+                {sorted.map((a) => (
                   <PendingRow key={a.id} analysis={a} />
                 ))}
               </tbody>

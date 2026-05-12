@@ -52,11 +52,11 @@ export async function getAnalysesByDate(
 }
 
 export async function getPending(): Promise<StockAnalysis[]> {
-  return db.listByStatuses(["PENDING", "READY_TO_REVIEW"]);
+  return db.listByStatuses(["PENDING"]);
 }
 
 export async function getReview(): Promise<StockAnalysis[]> {
-  return db.listByStatuses(["REVIEWED", "TRACKING"]);
+  return db.listByStatuses(["READY_TO_REVIEW", "REVIEWED", "TRACKING"]);
 }
 
 export async function getErrors(): Promise<StockAnalysis[]> {
@@ -82,10 +82,6 @@ export async function createAnalysis(
 
   const dup = await db.findBySymbolDate(sym, date);
   if (dup) throw new ClientError(`${date} 已新增過 ${sym}`);
-
-  const sameDay = await db.listByDate(date);
-  if (sameDay.length >= 3)
-    throw new ClientError(`${date} 已達每日 3 支股票上限`);
 
   const direction: Direction = data.direction ?? "BULLISH";
   const trackingTradingDays = data.tracking_trading_days ?? 5;
@@ -211,7 +207,12 @@ export async function refreshLatestPrice(
 export async function refreshAllLatest(): Promise<void> {
   const all = await db.listAll();
   for (const a of all) {
-    if (a.status === "REVIEWED" || a.status === "TRACKING") {
+    if (
+      a.status === "PENDING" ||
+      a.status === "READY_TO_REVIEW" ||
+      a.status === "REVIEWED" ||
+      a.status === "TRACKING"
+    ) {
       await refreshLatestForAnalysis(a.id);
     }
   }

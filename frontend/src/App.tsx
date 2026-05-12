@@ -90,7 +90,7 @@ export default function App() {
           <div className="flex items-center justify-between py-2 sm:py-3">
             <h1 className="text-base font-bold text-gray-900 sm:text-lg">
               股票分析練習紀錄
-              <span className="ml-1.5 rounded-full bg-blue-50 px-2 py-0.5 align-middle text-xs font-medium text-blue-600">
+              <span className="ml-1.5 hidden rounded-full bg-blue-50 px-2 py-0.5 align-middle text-xs font-medium text-blue-600 sm:inline">
                 Local-first
               </span>
             </h1>

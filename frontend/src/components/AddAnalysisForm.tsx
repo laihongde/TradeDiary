@@ -35,7 +35,6 @@ export function AddAnalysisForm() {
 
   const dateCount = dateAnalyses.data?.length ?? 0;
   const dateSymbols = dateAnalyses.data?.map((a) => a.symbol) ?? [];
-  const isFull = dateCount >= 3;
 
   const isPreMarket = new Date().getHours() < 9;
 
@@ -83,35 +82,27 @@ export function AddAnalysisForm() {
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6 dark:border-gray-700 dark:bg-gray-800">
       {/* 標題列 */}
       <div className="mb-5 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-800">新增分析</h2>
-        <div className="flex items-center gap-2">
-          <div className="flex gap-1">
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className={`h-3 w-3 rounded-full ${i < dateCount ? "bg-blue-500" : "bg-gray-200 dark:bg-gray-600"}`}
-              />
-            ))}
-          </div>
-          <span className="text-sm text-gray-500">
-            已新增 <strong>{dateCount}</strong> / 3 支
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">新增分析</h2>
+        {dateCount > 0 && (
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            今日已新增 <strong>{dateCount}</strong> 支
           </span>
-        </div>
+        )}
       </div>
 
       {/* 日期選擇 */}
       <div className="mb-4">
         <div className="flex flex-wrap items-center gap-2">
-          <label className="text-sm font-medium text-gray-600 whitespace-nowrap">分析日期</label>
+          <label className="text-sm font-medium text-gray-600 whitespace-nowrap dark:text-gray-300">分析日期</label>
           <input
             type="date"
             value={analysisDate}
             max={toLocalDateStr(new Date())}
             onChange={(e) => setAnalysisDate(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:[color-scheme:dark]"
           />
           {isPreMarket && (
             <span className="rounded-full bg-amber-50 dark:bg-amber-400/20 px-2 py-0.5 text-xs text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-400/40">
@@ -135,12 +126,7 @@ export function AddAnalysisForm() {
         </div>
       )}
 
-      {isFull ? (
-        <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700 text-center">
-          ✓ {analysisDate} 已完成 3 支分析，切換日期可繼續新增
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-3 pb-20 sm:pb-0">
+      <form onSubmit={handleSubmit} className="space-y-3 pb-20 sm:pb-0">
           {/* 股票代號 + 方向 */}
           <div className="flex gap-3">
             <input
@@ -148,14 +134,14 @@ export function AddAnalysisForm() {
               placeholder="股票代號 (例：2330 或 AAPL)"
               value={symbol}
               onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-              className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm uppercase placeholder:normal-case focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm uppercase placeholder:normal-case focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-500"
               maxLength={20}
               required
             />
             <select
               value={direction}
               onChange={(e) => setDirection(e.target.value as Direction)}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
             >
               <option value="BULLISH">▲ 看多</option>
               <option value="BEARISH">▼ 看空</option>
@@ -168,13 +154,13 @@ export function AddAnalysisForm() {
             placeholder="備註 (可選)"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-500"
           />
 
           {/* 追蹤週期 */}
           <div className="space-y-1">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs text-gray-500 whitespace-nowrap">追蹤週期</span>
+              <span className="text-xs text-gray-500 whitespace-nowrap dark:text-gray-400">追蹤週期</span>
               {[1, 3, 5, 10, 20].map((d) => (
                 <button
                   key={d}
@@ -183,7 +169,7 @@ export function AddAnalysisForm() {
                   className={`rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors ${
                     !useCustom && trackingDays === d
                       ? "bg-blue-600 text-white border-blue-600"
-                      : "bg-white text-gray-600 border-gray-300 hover:border-blue-400"
+                      : "bg-white text-gray-600 border-gray-300 hover:border-blue-400 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600"
                   }`}
                 >
                   {d} 日
@@ -195,7 +181,7 @@ export function AddAnalysisForm() {
                 className={`rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors ${
                   useCustom
                     ? "bg-blue-600 text-white border-blue-600"
-                    : "bg-white text-gray-600 border-gray-300 hover:border-blue-400"
+                    : "bg-white text-gray-600 border-gray-300 hover:border-blue-400 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600"
                 }`}
               >
                 自訂
@@ -208,7 +194,7 @@ export function AddAnalysisForm() {
                   placeholder="天數"
                   value={customDays}
                   onChange={(e) => setCustomDays(e.target.value)}
-                  className="w-16 rounded-lg border border-gray-300 px-2 py-0.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-16 rounded-lg border border-gray-300 px-2 py-0.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                 />
               )}
             </div>
@@ -216,7 +202,7 @@ export function AddAnalysisForm() {
 
           {/* 進階欄位 */}
           <details className="group">
-            <summary className="cursor-pointer text-xs text-gray-500 hover:text-gray-700">
+            <summary className="cursor-pointer text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
               進階選項（標籤、進出場價）
             </summary>
             <div className="mt-3 space-y-3">
@@ -226,12 +212,12 @@ export function AddAnalysisForm() {
                 placeholder="標籤 (逗號分隔)"
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-500"
               />
               {/* 進場價 */}
               <div>
                 <div className="mb-1.5 flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-500">進場價</span>
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">進場價</span>
                   <button
                     type="button"
                     onClick={() => setEntryPrices((p) => [...p, ""])}
@@ -253,7 +239,7 @@ export function AddAnalysisForm() {
                         }
                         min="0"
                         step="0.01"
-                        className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                       />
                       {entryPrices.length > 1 && (
                         <button
@@ -271,7 +257,7 @@ export function AddAnalysisForm() {
               {/* 出場價 */}
               <div>
                 <div className="mb-1.5 flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-500">出場價</span>
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">出場價</span>
                   <button
                     type="button"
                     onClick={() => setExitPrices((p) => [...p, ""])}
@@ -293,7 +279,7 @@ export function AddAnalysisForm() {
                         }
                         min="0"
                         step="0.01"
-                        className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                       />
                       {exitPrices.length > 1 && (
                         <button
@@ -314,7 +300,7 @@ export function AddAnalysisForm() {
           {error && <p className="text-sm text-red-600">{error}</p>}
 
           {/* 手機：固定在螢幕底部；桌機：inline */}
-          <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-gray-200 bg-white/95 px-4 py-3 backdrop-blur-sm sm:static sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+          <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-gray-200 bg-white/95 px-4 py-3 backdrop-blur-sm sm:static sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none dark:border-gray-700 dark:bg-gray-900/95">
             <Btn
               variant="primary"
               size="md"
@@ -325,7 +311,6 @@ export function AddAnalysisForm() {
             </Btn>
           </div>
         </form>
-      )}
     </div>
   );
 }

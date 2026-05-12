@@ -183,9 +183,20 @@ export function Table({ children }: { children: ReactNode }) {
   );
 }
 
-export function Th({ children }: { children: ReactNode }) {
+export function Th({
+  children,
+  className = "",
+  onClick,
+}: {
+  children: ReactNode;
+  className?: string;
+  onClick?: () => void;
+}) {
   return (
-    <th className="whitespace-nowrap px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+    <th
+      className={`whitespace-nowrap px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 ${className}`}
+      onClick={onClick}
+    >
       {children}
     </th>
   );

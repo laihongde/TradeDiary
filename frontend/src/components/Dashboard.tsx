@@ -23,9 +23,9 @@ function StatCard({
           : "text-gray-800";
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm card-glow">
       <div className="mb-1 text-sm text-gray-500">{label}</div>
-      <div className={`text-2xl font-bold ${colorCls}`}>{value}</div>
+      <div className={`text-2xl font-bold stat-value-pop ${colorCls}`}>{value}</div>
       {sub && <div className="mt-1 text-xs text-gray-400">{sub}</div>}
     </div>
   );
@@ -55,7 +55,7 @@ export function Dashboard() {
           整體表現（所有已完成週期檢視）
         </h3>
         {s ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 stagger-children">
             <StatCard label="總分析筆數" value={s.total} />
             <StatCard
               label="週期勝率"
@@ -124,7 +124,7 @@ export function Dashboard() {
         </div>
 
         {p ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 stagger-children">
             <StatCard
               label="分析筆數"
               value={p.total_analyses}
@@ -156,7 +156,7 @@ export function Dashboard() {
                   : undefined
               }
             />
-            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm card-glow">
               <div className="mb-1 text-sm text-gray-500">最佳 / 最差</div>
               {p.best_stock ? (
                 <div>
@@ -191,7 +191,7 @@ export function Dashboard() {
           依追蹤週期分組表現
         </h3>
         {trackingDaysStats.data && trackingDaysStats.data.length > 0 ? (
-          <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm card-glow">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 text-left text-xs text-gray-500">

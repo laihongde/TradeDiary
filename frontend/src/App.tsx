@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { AddAnalysisForm } from "./components/AddAnalysisForm";
 import { BackupPage } from "./components/BackupPage";
 import { DailyHistory } from "./components/DailyHistory";
@@ -47,7 +47,7 @@ function TopBar() {
           refreshAll.mutate();
         }}
         disabled={refreshAll.isPending || updateStatuses.isPending}
-        className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-200 disabled:opacity-50"
+        className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-200 disabled:opacity-50 btn-ripple"
       >
         {refreshAll.isPending ? "更新中..." : "↻ 全部更新"}
       </button>
@@ -57,7 +57,13 @@ function TopBar() {
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("today");
+  const [tabKey, setTabKey] = useState(0);
   const [showSplash, setShowSplash] = useState(true);
+
+  const handleTabChange = useCallback((t: Tab) => {
+    setTab(t);
+    setTabKey((k) => k + 1);
+  }, []);
 
   return (
     <>
@@ -66,7 +72,7 @@ export default function App() {
       <LocalOnlyNotice />
 
       {/* Header */}
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
+      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm header-tech">
         <div className="mx-auto max-w-7xl px-4">
           <div className="flex items-center justify-between py-2 sm:py-3">
             <h1 className="text-base font-bold text-gray-900 sm:text-lg">
@@ -79,14 +85,14 @@ export default function App() {
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 overflow-x-auto pb-0">
+          <div className="-mx-4 flex overflow-x-auto px-4 pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {TABS.map((t) => (
               <button
                 key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`whitespace-nowrap border-b-2 px-2.5 py-2 text-xs font-medium transition-colors sm:px-4 sm:py-2.5 sm:text-sm ${
+                onClick={() => handleTabChange(t.id)}
+                className={`tab-indicator-animate shrink-0 whitespace-nowrap border-b-2 px-3 py-2 text-xs font-medium transition-colors sm:px-4 sm:py-2.5 sm:text-sm ${
                   tab === t.id
-                    ? "border-blue-600 text-blue-600"
+                    ? "active border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700"
                 }`}
               >
@@ -98,7 +104,8 @@ export default function App() {
       </header>
 
       {/* Content */}
-      <main className="mx-auto max-w-7xl px-3 py-4 sm:px-4 sm:py-6">
+      <main className="mx-auto max-w-7xl px-3 py-4 sm:px-4 sm:py-6 scan-line">
+        <div key={tabKey} className="tab-content-enter">
         {tab === "today" && (
           <div className="space-y-6">
             <AddAnalysisForm />
@@ -108,7 +115,7 @@ export default function App() {
         {tab === "review" && <ReviewSection />}
         {tab === "dashboard" && <Dashboard />}
         {tab === "daily" && (
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6 card-glow">
             <h2 className="mb-4 text-base font-semibold text-gray-800 sm:text-lg">
               每日分析紀錄
             </h2>
@@ -116,7 +123,7 @@ export default function App() {
           </div>
         )}
         {tab === "stock" && (
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6 card-glow">
             <h2 className="mb-4 text-base font-semibold text-gray-800 sm:text-lg">
               個股歷史分析
             </h2>
@@ -126,6 +133,7 @@ export default function App() {
         {tab === "errors" && <ErrorList />}
         {tab === "backup" && <BackupPage />}
         {tab === "sources" && <DataSourceStatus />}
+        </div>
       </main>
     </div>
     </>

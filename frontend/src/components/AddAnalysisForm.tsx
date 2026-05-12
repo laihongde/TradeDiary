@@ -23,8 +23,8 @@ export function AddAnalysisForm() {
   const [direction, setDirection] = useState<Direction>("BULLISH");
   const [notes, setNotes] = useState("");
   const [tags, setTags] = useState("");
-  const [targetPrice, setTargetPrice] = useState("");
-  const [stopLoss, setStopLoss] = useState("");
+  const [entryPrices, setEntryPrices] = useState<string[]>([""]);  
+  const [exitPrices, setExitPrices] = useState<string[]>([""]);
   const [trackingDays, setTrackingDays] = useState<number>(5);
   const [customDays, setCustomDays] = useState("");
   const [useCustom, setUseCustom] = useState(false);
@@ -54,21 +54,26 @@ export function AddAnalysisForm() {
       const finalDays = useCustom
         ? Math.max(1, parseInt(customDays, 10) || 5)
         : trackingDays;
+      const validEntry = entryPrices.filter((p) => p.trim() !== "");
+      const validExit = exitPrices.filter((p) => p.trim() !== "");
+      const priceLine = [
+        validEntry.length ? `進場: ${validEntry.join(" / ")}` : "",
+        validExit.length ? `出場: ${validExit.join(" / ")}` : "",
+      ].filter(Boolean).join("　");
+      const finalNotes = [priceLine, notes.trim()].filter(Boolean).join("\n") || undefined;
       await create.mutateAsync({
         symbol: sym,
         analysis_date: analysisDate,
         direction,
-        notes: notes.trim() || undefined,
+        notes: finalNotes,
         tags: tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
-        target_price: targetPrice ? parseFloat(targetPrice) : undefined,
-        stop_loss_price: stopLoss ? parseFloat(stopLoss) : undefined,
         tracking_trading_days: finalDays,
       });
       setSymbol("");
       setNotes("");
       setTags("");
-      setTargetPrice("");
-      setStopLoss("");
+      setEntryPrices([""]);
+      setExitPrices([""]);
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
@@ -135,7 +140,7 @@ export function AddAnalysisForm() {
           ✓ {analysisDate} 已完成 3 支分析，切換日期可繼續新增
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3 pb-20 sm:pb-0">
           {/* 股票代號 + 方向 */}
           <div className="flex gap-3">
             <input
@@ -212,47 +217,113 @@ export function AddAnalysisForm() {
           {/* 進階欄位 */}
           <details className="group">
             <summary className="cursor-pointer text-xs text-gray-500 hover:text-gray-700">
-              進階選項（標籤、目標價、停損價）
+              進階選項（標籤、進出場價）
             </summary>
-            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
+            <div className="mt-3 space-y-3">
+              {/* 標籤 */}
               <input
                 type="text"
                 placeholder="標籤 (逗號分隔)"
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <input
-                type="number"
-                placeholder="目標價"
-                value={targetPrice}
-                onChange={(e) => setTargetPrice(e.target.value)}
-                min="0"
-                step="0.01"
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <input
-                type="number"
-                placeholder="停損價"
-                value={stopLoss}
-                onChange={(e) => setStopLoss(e.target.value)}
-                min="0"
-                step="0.01"
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              {/* 進場價 */}
+              <div>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <span className="text-xs font-medium text-gray-500">進場價</span>
+                  <button
+                    type="button"
+                    onClick={() => setEntryPrices((p) => [...p, ""])}
+                    className="text-xs text-blue-500 hover:text-blue-700"
+                  >
+                    ＋ 多段進場
+                  </button>
+                </div>
+                <div className="space-y-1.5">
+                  {entryPrices.map((val, idx) => (
+                    <div key={idx} className="flex items-center gap-1.5">
+                      <span className="w-4 shrink-0 text-center text-xs text-gray-400">{idx + 1}</span>
+                      <input
+                        type="number"
+                        placeholder="進場價"
+                        value={val}
+                        onChange={(e) =>
+                          setEntryPrices((p) => p.map((v, i) => (i === idx ? e.target.value : v)))
+                        }
+                        min="0"
+                        step="0.01"
+                        className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      {entryPrices.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setEntryPrices((p) => p.filter((_, i) => i !== idx))}
+                          className="text-gray-400 hover:text-red-500"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* 出場價 */}
+              <div>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <span className="text-xs font-medium text-gray-500">出場價</span>
+                  <button
+                    type="button"
+                    onClick={() => setExitPrices((p) => [...p, ""])}
+                    className="text-xs text-blue-500 hover:text-blue-700"
+                  >
+                    ＋ 多段出場
+                  </button>
+                </div>
+                <div className="space-y-1.5">
+                  {exitPrices.map((val, idx) => (
+                    <div key={idx} className="flex items-center gap-1.5">
+                      <span className="w-4 shrink-0 text-center text-xs text-gray-400">{idx + 1}</span>
+                      <input
+                        type="number"
+                        placeholder="出場價"
+                        value={val}
+                        onChange={(e) =>
+                          setExitPrices((p) => p.map((v, i) => (i === idx ? e.target.value : v)))
+                        }
+                        min="0"
+                        step="0.01"
+                        className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      {exitPrices.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setExitPrices((p) => p.filter((_, i) => i !== idx))}
+                          className="text-gray-400 hover:text-red-500"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </details>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
 
-          <Btn
-            variant="primary"
-            size="md"
-            disabled={create.isPending || !symbol.trim()}
-            className="w-full"
-          >
-            {create.isPending ? "新增中..." : "+ 新增分析"}
-          </Btn>
+          {/* 手機：固定在螢幕底部；桌機：inline */}
+          <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-gray-200 bg-white/95 px-4 py-3 backdrop-blur-sm sm:static sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+            <Btn
+              variant="primary"
+              size="md"
+              disabled={create.isPending || !symbol.trim()}
+              className="w-full"
+            >
+              {create.isPending ? "新增中..." : "+ 新增分析"}
+            </Btn>
+          </div>
         </form>
       )}
     </div>

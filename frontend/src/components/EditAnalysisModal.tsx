@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useUpdateAnalysis } from "../hooks/useAnalyses";
 import type { Direction, StockAnalysis } from "../types";
 
@@ -7,14 +8,37 @@ interface Props {
   onClose: () => void;
 }
 
+function parsePriceNotes(raw: string): { entry: string[]; exit: string[]; rest: string } {
+  const lines = raw.split("\n");
+  const firstLine = lines[0] ?? "";
+  let entry: string[] = [""];
+  let exit: string[] = [""];
+  let rest = raw;
+  if (firstLine.includes("進場:") || firstLine.includes("出場:")) {
+    const parts = firstLine.split("　"); // full-width space
+    for (const part of parts) {
+      if (part.startsWith("進場:")) {
+        const vals = part.replace("進場:", "").trim().split(" / ").map((s) => s.trim()).filter(Boolean);
+        entry = vals.length ? vals : [""];
+      } else if (part.startsWith("出場:")) {
+        const vals = part.replace("出場:", "").trim().split(" / ").map((s) => s.trim()).filter(Boolean);
+        exit = vals.length ? vals : [""];
+      }
+    }
+    rest = lines.slice(1).join("\n");
+  }
+  return { entry, exit, rest };
+}
+
 export function EditAnalysisModal({ analysis, onClose }: Props) {
   const update = useUpdateAnalysis();
 
+  const parsed = parsePriceNotes(analysis.notes ?? "");
   const [direction, setDirection] = useState<Direction>(analysis.direction);
-  const [notes, setNotes] = useState(analysis.notes ?? "");
+  const [plainNotes, setPlainNotes] = useState(parsed.rest);
   const [tags, setTags] = useState(analysis.tags.join(", "));
-  const [targetPrice, setTargetPrice] = useState(analysis.targetPrice?.toString() ?? "");
-  const [stopLoss, setStopLoss] = useState(analysis.stopLossPrice?.toString() ?? "");
+  const [entryPrices, setEntryPrices] = useState<string[]>(parsed.entry);
+  const [exitPrices, setExitPrices] = useState<string[]>(parsed.exit);
   const [reviewPrice, setReviewPrice] = useState(analysis.reviewPrice?.toString() ?? "");
   const [error, setError] = useState("");
 
@@ -26,11 +50,17 @@ export function EditAnalysisModal({ analysis, onClose }: Props) {
 
   async function handleSave() {
     setError("");
+    const validEntry = entryPrices.filter((p) => p.trim() !== "");
+    const validExit = exitPrices.filter((p) => p.trim() !== "");
+    const priceLine = [
+      validEntry.length ? `進場: ${validEntry.join(" / ")}` : "",
+      validExit.length ? `出場: ${validExit.join(" / ")}` : "",
+    ].filter(Boolean).join("　");
+    const finalNotes = [priceLine, plainNotes.trim()].filter(Boolean).join("\n") || undefined;
+
     const payload: Parameters<typeof update.mutateAsync>[0]["data"] = {
-      notes: notes.trim() || undefined,
+      notes: finalNotes,
       tags: tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
-      target_price: targetPrice ? parseFloat(targetPrice) : undefined,
-      stop_loss_price: stopLoss ? parseFloat(stopLoss) : undefined,
     };
 
     // 只有原本沒有 review_price 才允許補入（不可覆蓋）
@@ -56,7 +86,7 @@ export function EditAnalysisModal({ analysis, onClose }: Props) {
 
   const hasReview = !!analysis.reviewPrice;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center"
       onClick={(e) => e.target === e.currentTarget && onClose()}
@@ -86,8 +116,8 @@ export function EditAnalysisModal({ analysis, onClose }: Props) {
             <label className="mb-1 block font-medium text-gray-600">備註</label>
             <input
               type="text"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              value={plainNotes}
+              onChange={(e) => setPlainNotes(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -102,28 +132,85 @@ export function EditAnalysisModal({ analysis, onClose }: Props) {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block font-medium text-gray-600">目標價</label>
-              <input
-                type="number"
-                value={targetPrice}
-                onChange={(e) => setTargetPrice(e.target.value)}
-                step="0.01"
-                min="0"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+          {/* 進場價 */}
+          <div>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className="font-medium text-gray-600">進場價</label>
+              <button
+                type="button"
+                onClick={() => setEntryPrices((p) => [...p, ""])}
+                className="text-xs text-blue-500 hover:text-blue-700"
+              >
+                ＋ 多段進場
+              </button>
             </div>
-            <div>
-              <label className="mb-1 block font-medium text-gray-600">停損價</label>
-              <input
-                type="number"
-                value={stopLoss}
-                onChange={(e) => setStopLoss(e.target.value)}
-                step="0.01"
-                min="0"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+            <div className="space-y-1.5">
+              {entryPrices.map((val, idx) => (
+                <div key={idx} className="flex items-center gap-1.5">
+                  <span className="w-4 shrink-0 text-center text-xs text-gray-400">{idx + 1}</span>
+                  <input
+                    type="number"
+                    placeholder="進場價"
+                    value={val}
+                    onChange={(e) =>
+                      setEntryPrices((p) => p.map((v, i) => (i === idx ? e.target.value : v)))
+                    }
+                    min="0"
+                    step="0.01"
+                    className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {entryPrices.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setEntryPrices((p) => p.filter((_, i) => i !== idx))}
+                      className="text-gray-400 hover:text-red-500"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 出場價 */}
+          <div>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className="font-medium text-gray-600">出場價</label>
+              <button
+                type="button"
+                onClick={() => setExitPrices((p) => [...p, ""])}
+                className="text-xs text-blue-500 hover:text-blue-700"
+              >
+                ＋ 多段出場
+              </button>
+            </div>
+            <div className="space-y-1.5">
+              {exitPrices.map((val, idx) => (
+                <div key={idx} className="flex items-center gap-1.5">
+                  <span className="w-4 shrink-0 text-center text-xs text-gray-400">{idx + 1}</span>
+                  <input
+                    type="number"
+                    placeholder="出場價"
+                    value={val}
+                    onChange={(e) =>
+                      setExitPrices((p) => p.map((v, i) => (i === idx ? e.target.value : v)))
+                    }
+                    min="0"
+                    step="0.01"
+                    className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {exitPrices.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setExitPrices((p) => p.filter((_, i) => i !== idx))}
+                      className="text-gray-400 hover:text-red-500"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 
@@ -175,6 +262,7 @@ export function EditAnalysisModal({ analysis, onClose }: Props) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

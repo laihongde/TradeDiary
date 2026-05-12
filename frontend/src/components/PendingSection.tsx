@@ -147,7 +147,7 @@ function PendingCard({ analysis }: { analysis: StockAnalysis }) {
   );
 }
 
-
+function PendingRow({ analysis }: { analysis: StockAnalysis }) {
   const fetchReview = useFetchReview();
   const refreshLatest = useRefreshLatest();
   const deleteAnalysis = useDeleteAnalysis();

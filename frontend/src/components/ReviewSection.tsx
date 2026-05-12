@@ -121,7 +121,7 @@ function ReviewCard({ analysis }: { analysis: StockAnalysis }) {
   );
 }
 
-
+function ReviewRow({ analysis }: { analysis: StockAnalysis }) {
   const refreshLatest = useRefreshLatest();
   const fetchReview = useFetchReview();
   const deleteAnalysis = useDeleteAnalysis();

@@ -120,11 +120,11 @@ export function Section({
 }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-        <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
+      <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 sm:px-6 sm:py-4">
+        <h2 className="text-base font-semibold text-gray-800 sm:text-lg">{title}</h2>
         {actions && <div className="flex gap-2">{actions}</div>}
       </div>
-      <div className="p-4">{children}</div>
+      <div className="p-3 sm:p-4">{children}</div>
     </div>
   );
 }

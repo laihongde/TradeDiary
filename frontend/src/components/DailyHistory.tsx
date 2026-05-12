@@ -39,22 +39,22 @@ export function DailyHistory() {
           <table className="min-w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100">
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-4 sm:py-3">
                   日期
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-4 sm:py-3">
                   股票
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-4 sm:py-3">
                   筆數
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <th className="hidden px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 sm:table-cell sm:px-4 sm:py-3">
                   已完成檢視
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-4 sm:py-3">
                   勝率
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-4 sm:py-3">
                   平均報酬
                 </th>
               </tr>
@@ -65,10 +65,10 @@ export function DailyHistory() {
                   key={rec.date}
                   className="border-t border-gray-100 hover:bg-gray-50"
                 >
-                  <td className="px-4 py-2 font-medium text-gray-700">
+                  <td className="px-3 py-2 font-medium text-gray-700 sm:px-4">
                     {rec.date}
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="px-3 py-2 sm:px-4">
                     <div className="flex flex-wrap gap-1">
                       {rec.symbols.map((sym) => (
                         <span
@@ -80,11 +80,11 @@ export function DailyHistory() {
                       ))}
                     </div>
                   </td>
-                  <td className="px-4 py-2 text-right">{rec.count}</td>
-                  <td className="px-4 py-2 text-right">
+                  <td className="px-3 py-2 text-right sm:px-4">{rec.count}</td>
+                  <td className="hidden px-3 py-2 text-right sm:table-cell sm:px-4">
                     {rec.completed_reviews}
                   </td>
-                  <td className="px-4 py-2 text-right">
+                  <td className="px-3 py-2 text-right sm:px-4">
                     {rec.win_rate != null ? (
                       <span
                         className={
@@ -99,7 +99,7 @@ export function DailyHistory() {
                       <span className="text-gray-400">-</span>
                     )}
                   </td>
-                  <td className="px-4 py-2 text-right">
+                  <td className="px-3 py-2 text-right sm:px-4">
                     <ReturnBadge value={rec.avg_return} />
                   </td>
                 </tr>

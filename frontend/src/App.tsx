@@ -64,10 +64,10 @@ export default function App() {
       {/* Header */}
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white shadow-sm">
         <div className="mx-auto max-w-7xl px-4">
-          <div className="flex items-center justify-between py-3">
-            <h1 className="text-lg font-bold text-gray-900">
+          <div className="flex items-center justify-between py-2 sm:py-3">
+            <h1 className="text-base font-bold text-gray-900 sm:text-lg">
               股票分析練習紀錄
-              <span className="ml-2 rounded-full bg-blue-50 px-2 py-0.5 align-middle text-xs font-medium text-blue-600">
+              <span className="ml-1.5 rounded-full bg-blue-50 px-2 py-0.5 align-middle text-xs font-medium text-blue-600">
                 Local-first
               </span>
             </h1>
@@ -80,7 +80,7 @@ export default function App() {
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
+                className={`whitespace-nowrap border-b-2 px-2.5 py-2 text-xs font-medium transition-colors sm:px-4 sm:py-2.5 sm:text-sm ${
                   tab === t.id
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700"
@@ -94,7 +94,7 @@ export default function App() {
       </header>
 
       {/* Content */}
-      <main className="mx-auto max-w-7xl px-4 py-6">
+      <main className="mx-auto max-w-7xl px-3 py-4 sm:px-4 sm:py-6">
         {tab === "today" && (
           <div className="space-y-6">
             <AddAnalysisForm />
@@ -104,16 +104,16 @@ export default function App() {
         {tab === "review" && <ReviewSection />}
         {tab === "dashboard" && <Dashboard />}
         {tab === "daily" && (
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-gray-800">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+            <h2 className="mb-4 text-base font-semibold text-gray-800 sm:text-lg">
               每日分析紀錄
             </h2>
             <DailyHistory />
           </div>
         )}
         {tab === "stock" && (
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-gray-800">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+            <h2 className="mb-4 text-base font-semibold text-gray-800 sm:text-lg">
               個股歷史分析
             </h2>
             <StockHistory />

@@ -102,7 +102,7 @@ export function Dashboard() {
 
       {/* 依時間區間 */}
       <div>
-        <div className="mb-3 flex items-center gap-2">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
           <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
             依時間區間
           </h3>
@@ -195,31 +195,31 @@ export function Dashboard() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 text-left text-xs text-gray-500">
-                  <th className="px-4 py-2 font-medium">追蹤週期</th>
-                  <th className="px-4 py-2 font-medium text-right">筆數</th>
-                  <th className="px-4 py-2 font-medium text-right">週期勝率</th>
-                  <th className="px-4 py-2 font-medium text-right">平均週期報酬</th>
-                  <th className="px-4 py-2 font-medium text-right">成功 / 失敗</th>
+                  <th className="px-3 py-2 font-medium sm:px-4">追蹤週期</th>
+                  <th className="px-3 py-2 font-medium text-right sm:px-4">筆數</th>
+                  <th className="px-3 py-2 font-medium text-right sm:px-4">勝率</th>
+                  <th className="px-3 py-2 font-medium text-right sm:px-4">平均報酬</th>
+                  <th className="hidden px-3 py-2 font-medium text-right sm:table-cell sm:px-4">成功 / 失敗</th>
                 </tr>
               </thead>
               <tbody>
                 {trackingDaysStats.data.map((g) => (
                   <tr key={g.trackingTradingDays} className="border-t border-gray-100 hover:bg-gray-50">
-                    <td className="px-4 py-2 font-medium">追蹤 {g.trackingTradingDays} 個交易日</td>
-                    <td className="px-4 py-2 text-right">{g.total}</td>
-                    <td className={`px-4 py-2 text-right font-semibold ${
+                    <td className="px-3 py-2 font-medium sm:px-4">追蹤 {g.trackingTradingDays} 日</td>
+                    <td className="px-3 py-2 text-right sm:px-4">{g.total}</td>
+                    <td className={`px-3 py-2 text-right font-semibold sm:px-4 ${
                       g.win_rate == null ? "text-gray-400" : g.win_rate >= 50 ? "text-green-600" : "text-red-600"
                     }`}>
                       {g.win_rate != null ? `${g.win_rate.toFixed(1)}%` : "-"}
                     </td>
-                    <td className={`px-4 py-2 text-right font-semibold ${
+                    <td className={`px-3 py-2 text-right font-semibold sm:px-4 ${
                       g.avg_return == null ? "text-gray-400" : g.avg_return > 0 ? "text-green-600" : "text-red-600"
                     }`}>
                       {g.avg_return != null
                         ? `${g.avg_return > 0 ? "+" : ""}${g.avg_return.toFixed(2)}%`
                         : "-"}
                     </td>
-                    <td className="px-4 py-2 text-right text-gray-500">
+                    <td className="hidden px-3 py-2 text-right text-gray-500 sm:table-cell sm:px-4">
                       <span className="text-green-600">{g.success}</span>
                       {" / "}
                       <span className="text-red-600">{g.failed}</span>

@@ -93,22 +93,22 @@ export function StockHistory() {
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100">
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-4 sm:py-3">
                     分析日期
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-4 sm:py-3">
                     方向
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-4 sm:py-3">
                     分析價
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    一週後價
+                  <th className="hidden px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 sm:table-cell sm:px-4 sm:py-3">
+                    結算價
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    一週報酬
+                  <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-4 sm:py-3">
+                    週期報酬
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <th className="px-3 py-2 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-4 sm:py-3">
                     結果
                   </th>
                 </tr>
@@ -119,24 +119,24 @@ export function StockHistory() {
                     key={a.id}
                     className="border-t border-gray-100 hover:bg-gray-50"
                   >
-                    <td className="px-4 py-2">{a.analysisDate}</td>
-                    <td className="px-4 py-2">
+                    <td className="px-3 py-2 sm:px-4">{a.analysisDate}</td>
+                    <td className="px-3 py-2 sm:px-4">
                       {a.direction === "BULLISH" ? (
                         <span className="text-green-600">▲ 看多</span>
                       ) : (
                         <span className="text-red-600">▼ 看空</span>
                       )}
                     </td>
-                    <td className="px-4 py-2 text-right">
+                    <td className="px-3 py-2 text-right sm:px-4">
                       {a.analysisPrice?.toFixed(2) ?? "-"}
                     </td>
-                    <td className="px-4 py-2 text-right">
+                    <td className="hidden px-3 py-2 text-right sm:table-cell sm:px-4">
                       {a.reviewPrice?.toFixed(2) ?? "-"}
                     </td>
-                    <td className="px-4 py-2 text-right">
+                    <td className="px-3 py-2 text-right sm:px-4">
                       <ReturnBadge value={a.weekReturn} />
                     </td>
-                    <td className="px-4 py-2 text-center">
+                    <td className="px-3 py-2 text-center sm:px-4">
                       {a.weekReturn != null ? (
                         <SuccessBadge value={a.isSuccess} />
                       ) : (

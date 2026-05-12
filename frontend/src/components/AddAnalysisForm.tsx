@@ -78,7 +78,7 @@ export function AddAnalysisForm() {
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
       {/* 標題列 */}
       <div className="mb-5 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-800">新增分析</h2>
@@ -99,7 +99,7 @@ export function AddAnalysisForm() {
 
       {/* 日期選擇 */}
       <div className="mb-4">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <label className="text-sm font-medium text-gray-600 whitespace-nowrap">分析日期</label>
           <input
             type="date"
@@ -214,7 +214,7 @@ export function AddAnalysisForm() {
             <summary className="cursor-pointer text-xs text-gray-500 hover:text-gray-700">
               進階選項（標籤、目標價、停損價）
             </summary>
-            <div className="mt-2 grid grid-cols-3 gap-3">
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
               <input
                 type="text"
                 placeholder="標籤 (逗號分隔)"

@@ -177,7 +177,7 @@ export function Btn({
 
 export function Table({ children }: { children: ReactNode }) {
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <table className="min-w-full text-sm">{children}</table>
     </div>
   );

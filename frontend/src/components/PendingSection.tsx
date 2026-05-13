@@ -1,6 +1,7 @@
 import { format, parseISO } from "date-fns";
 import { ChevronDown, ChevronUp, ChevronsUpDown, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   useDeleteAnalysis,
   useFetchReview,
@@ -84,11 +85,165 @@ function sortAnalyses(list: StockAnalysis[], key: SortKey, dir: SortDir): StockA
 // suppress unused import warning – toIsoDate used indirectly via calcReviewDate
 void toIsoDate;
 
+type PnLLeg = { price: number; qty: number };
+
+function parsePnLFromNotes(notes?: string): { entry: PnLLeg[]; exit: PnLLeg[] } | null {
+  if (!notes) return null;
+  const firstLine = notes.split("\n")[0] ?? "";
+  if (!firstLine.includes("×")) return null;
+  const parts = firstLine.split("　");
+  const entry: PnLLeg[] = [];
+  const exit: PnLLeg[] = [];
+  for (const part of parts) {
+    const isEntry = part.startsWith("進場:");
+    const isExit = part.startsWith("出場:");
+    if (!isEntry && !isExit) continue;
+    const str = part.replace(/^(進場|出場):/, "").trim();
+    const target = isEntry ? entry : exit;
+    for (const leg of str.split(" / ").filter(Boolean)) {
+      const [priceStr, qtyStr] = leg.split("×");
+      const price = parseFloat(priceStr?.trim() ?? "");
+      const qty = parseFloat(qtyStr?.trim() ?? "");
+      if (!isNaN(price) && !isNaN(qty) && qty > 0) target.push({ price, qty });
+    }
+  }
+  if (!entry.length && !exit.length) return null;
+  return { entry, exit };
+}
+
+function PnLPopup({
+  notes,
+  latestPrice,
+  onClose,
+}: {
+  notes?: string;
+  latestPrice?: number | null;
+  onClose: () => void;
+}) {
+  const data = parsePnLFromNotes(notes);
+  const totalCost = data?.entry.reduce((s, l) => s + l.price * l.qty, 0) ?? 0;
+  const totalProceeds = data?.exit.reduce((s, l) => s + l.price * l.qty, 0) ?? 0;
+  const totalEntryQty = data?.entry.reduce((s, l) => s + l.qty, 0) ?? 0;
+  const hasEntry = (data?.entry.length ?? 0) > 0;
+  const hasExit = (data?.exit.length ?? 0) > 0;
+  const pnl = hasEntry && hasExit ? totalProceeds - totalCost : null;
+  const ret = pnl != null && totalCost > 0 ? (pnl / totalCost) * 100 : null;
+  const floatPnL =
+    hasEntry && !hasExit && latestPrice != null
+      ? latestPrice * totalEntryQty - totalCost
+      : null;
+  const floatRet = floatPnL != null && totalCost > 0 ? (floatPnL / totalCost) * 100 : null;
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-xs rounded-xl border border-gray-200 bg-white p-4 shadow-2xl dark:border-gray-700 dark:bg-gray-800"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-3 flex items-center justify-between">
+          <span className="font-semibold text-gray-800 dark:text-gray-100">損益試算</span>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          >
+            ✕
+          </button>
+        </div>
+        {!data ? (
+          <p className="text-sm text-gray-400">尚未設定含數量的進出場資料</p>
+        ) : (
+          <div className="space-y-3">
+            {hasEntry && (
+              <div>
+                <div className="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">進場</div>
+                {data.entry.map((l, i) => (
+                  <div key={i} className="flex justify-between text-sm">
+                    <span className="text-gray-600 dark:text-gray-300">{l.price} × {l.qty} 股</span>
+                    <span className="font-medium text-gray-800 dark:text-gray-100">{(l.price * l.qty).toLocaleString()}</span>
+                  </div>
+                ))}
+                <div className="mt-1 flex justify-between border-t border-gray-100 pt-1 text-sm dark:border-gray-700">
+                  <span className="text-gray-500">總成本</span>
+                  <span className="font-semibold text-gray-800 dark:text-gray-100">{totalCost.toLocaleString()}</span>
+                </div>
+              </div>
+            )}
+            {hasExit && (
+              <div>
+                <div className="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">出場</div>
+                {data.exit.map((l, i) => (
+                  <div key={i} className="flex justify-between text-sm">
+                    <span className="text-gray-600 dark:text-gray-300">{l.price} × {l.qty} 股</span>
+                    <span className="font-medium text-gray-800 dark:text-gray-100">{(l.price * l.qty).toLocaleString()}</span>
+                  </div>
+                ))}
+                <div className="mt-1 flex justify-between border-t border-gray-100 pt-1 text-sm dark:border-gray-700">
+                  <span className="text-gray-500">總收入</span>
+                  <span className="font-semibold text-gray-800 dark:text-gray-100">{totalProceeds.toLocaleString()}</span>
+                </div>
+              </div>
+            )}
+            {pnl != null && (
+              <div
+                className={`rounded-lg p-2 text-sm ${
+                  pnl >= 0 ? "bg-green-50 dark:bg-green-900/20" : "bg-red-50 dark:bg-red-900/20"
+                }`}
+              >
+                <div className="flex justify-between font-semibold">
+                  <span className="text-gray-700 dark:text-gray-200">已實現損益</span>
+                  <span className={pnl >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
+                    {pnl >= 0 ? "+" : ""}{pnl.toLocaleString()}
+                  </span>
+                </div>
+                {ret != null && (
+                  <div className="mt-0.5 flex justify-between text-xs text-gray-500">
+                    <span>報酬率</span>
+                    <span className={ret >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
+                      {ret >= 0 ? "+" : ""}{ret.toFixed(2)}%
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+            {floatPnL != null && (
+              <div
+                className={`rounded-lg p-2 text-sm ${
+                  floatPnL >= 0 ? "bg-blue-50 dark:bg-blue-900/20" : "bg-red-50 dark:bg-red-900/20"
+                }`}
+              >
+                <div className="flex justify-between font-semibold">
+                  <span className="text-gray-700 dark:text-gray-200">浮動損益 (最新價)</span>
+                  <span className={floatPnL >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}>
+                    {floatPnL >= 0 ? "+" : ""}{floatPnL.toLocaleString()}
+                  </span>
+                </div>
+                {floatRet != null && (
+                  <div className="mt-0.5 flex justify-between text-xs text-gray-500">
+                    <span>報酬率</span>
+                    <span className={floatRet >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}>
+                      {floatRet >= 0 ? "+" : ""}{floatRet.toFixed(2)}%
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+            <p className="text-xs text-gray-400">※ 不含手續費與稅</p>
+          </div>
+        )}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 function PendingCard({ analysis }: { analysis: StockAnalysis }) {
   const fetchReview = useFetchReview();
   const refreshLatest = useRefreshLatest();
   const deleteAnalysis = useDeleteAnalysis();
   const [editing, setEditing] = useState(false);
+  const [showPnL, setShowPnL] = useState(false);
   const n = analysis.trackingTradingDays ?? 5;
   const remaining = daysUntilReview(analysis.analysisDate, n);
   const canReview = isPastCutoff(analysis.analysisDate, n);
@@ -102,6 +257,7 @@ function PendingCard({ analysis }: { analysis: StockAnalysis }) {
   return (
     <>
       {editing && <EditAnalysisModal analysis={analysis} onClose={() => setEditing(false)} />}
+      {showPnL && <PnLPopup notes={analysis.notes} latestPrice={analysis.latestPrice != null ? Number(analysis.latestPrice) : null} onClose={() => setShowPnL(false)} />}
       <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 space-y-2">
         {/* 股票名稱 + 方向 + 狀態 */}
         <div className="flex items-center justify-between gap-2">
@@ -165,6 +321,9 @@ function PendingCard({ analysis }: { analysis: StockAnalysis }) {
           <Btn size="xs" variant="ghost" onClick={() => setEditing(true)}>
             <Pencil size={12} />
           </Btn>
+          <Btn size="xs" variant="ghost" onClick={() => setShowPnL(true)} title="損益試算">
+            損益
+          </Btn>
           <Btn size="xs" variant="ghost" onClick={handleDelete} disabled={deleteAnalysis.isPending}
             className="text-red-500 hover:bg-red-50">
             <Trash2 size={12} />
@@ -180,6 +339,7 @@ function PendingRow({ analysis }: { analysis: StockAnalysis }) {
   const refreshLatest = useRefreshLatest();
   const deleteAnalysis = useDeleteAnalysis();
   const [editing, setEditing] = useState(false);
+  const [showPnL, setShowPnL] = useState(false);
   const n = analysis.trackingTradingDays ?? 5;
   const remaining = daysUntilReview(analysis.analysisDate, n);
   const canReview = isPastCutoff(analysis.analysisDate, n);
@@ -193,6 +353,7 @@ function PendingRow({ analysis }: { analysis: StockAnalysis }) {
   return (
     <>
       {editing && <EditAnalysisModal analysis={analysis} onClose={() => setEditing(false)} />}
+      {showPnL && <PnLPopup notes={analysis.notes} latestPrice={analysis.latestPrice != null ? Number(analysis.latestPrice) : null} onClose={() => setShowPnL(false)} />}
       <tr className="border-t border-gray-100 hover:bg-gray-50">
         <Td>
           <div className="font-semibold">{analysis.symbol}</div>
@@ -247,6 +408,9 @@ function PendingRow({ analysis }: { analysis: StockAnalysis }) {
             </Btn>
             <Btn size="xs" variant="ghost" onClick={() => setEditing(true)}>
               <Pencil size={12} />
+            </Btn>
+            <Btn size="xs" variant="ghost" onClick={() => setShowPnL(true)} title="損益試算">
+              損益
             </Btn>
             <Btn size="xs" variant="ghost" onClick={handleDelete} disabled={deleteAnalysis.isPending}
               className="text-red-500 hover:bg-red-50">

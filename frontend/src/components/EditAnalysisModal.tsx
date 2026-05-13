@@ -8,26 +8,32 @@ interface Props {
   onClose: () => void;
 }
 
-function parsePriceNotes(raw: string): { entry: string[]; exit: string[]; rest: string } {
+function parsePriceNotes(raw: string): { entry: string[]; entryQty: string[]; exit: string[]; exitQty: string[]; rest: string } {
   const lines = raw.split("\n");
   const firstLine = lines[0] ?? "";
   let entry: string[] = [""];
+  let entryQty: string[] = [""];
   let exit: string[] = [""];
+  let exitQty: string[] = [""];
   let rest = raw;
   if (firstLine.includes("進場:") || firstLine.includes("出場:")) {
     const parts = firstLine.split("　"); // full-width space
     for (const part of parts) {
       if (part.startsWith("進場:")) {
-        const vals = part.replace("進場:", "").trim().split(" / ").map((s) => s.trim()).filter(Boolean);
-        entry = vals.length ? vals : [""];
+        const legs = part.replace("進場:", "").trim().split(" / ").map((s) => s.trim()).filter(Boolean);
+        const parsed = legs.map((s) => { const [p, q] = s.split("×"); return { price: p?.trim() ?? "", qty: q?.trim() ?? "" }; });
+        entry = parsed.length ? parsed.map((x) => x.price) : [""];
+        entryQty = parsed.length ? parsed.map((x) => x.qty) : [""];
       } else if (part.startsWith("出場:")) {
-        const vals = part.replace("出場:", "").trim().split(" / ").map((s) => s.trim()).filter(Boolean);
-        exit = vals.length ? vals : [""];
+        const legs = part.replace("出場:", "").trim().split(" / ").map((s) => s.trim()).filter(Boolean);
+        const parsed = legs.map((s) => { const [p, q] = s.split("×"); return { price: p?.trim() ?? "", qty: q?.trim() ?? "" }; });
+        exit = parsed.length ? parsed.map((x) => x.price) : [""];
+        exitQty = parsed.length ? parsed.map((x) => x.qty) : [""];
       }
     }
     rest = lines.slice(1).join("\n");
   }
-  return { entry, exit, rest };
+  return { entry, entryQty, exit, exitQty, rest };
 }
 
 export function EditAnalysisModal({ analysis, onClose }: Props) {
@@ -38,7 +44,9 @@ export function EditAnalysisModal({ analysis, onClose }: Props) {
   const [plainNotes, setPlainNotes] = useState(parsed.rest);
   const [tags, setTags] = useState(analysis.tags.join(", "));
   const [entryPrices, setEntryPrices] = useState<string[]>(parsed.entry);
+  const [entryQtys, setEntryQtys] = useState<string[]>(parsed.entryQty);
   const [exitPrices, setExitPrices] = useState<string[]>(parsed.exit);
+  const [exitQtys, setExitQtys] = useState<string[]>(parsed.exitQty);
   const [reviewPrice, setReviewPrice] = useState(analysis.reviewPrice?.toString() ?? "");
   const [error, setError] = useState("");
 
@@ -50,8 +58,13 @@ export function EditAnalysisModal({ analysis, onClose }: Props) {
 
   async function handleSave() {
     setError("");
-    const validEntry = entryPrices.filter((p) => p.trim() !== "");
-    const validExit = exitPrices.filter((p) => p.trim() !== "");
+    const fmtLeg = (price: string, qty: string) => {
+      const p = price.trim(); const q = qty.trim();
+      if (!p) return null;
+      return q ? `${p}\u00d7${q}` : p;
+    };
+    const validEntry = entryPrices.map((p, i) => fmtLeg(p, entryQtys[i] ?? "")).filter(Boolean) as string[];
+    const validExit = exitPrices.map((p, i) => fmtLeg(p, exitQtys[i] ?? "")).filter(Boolean) as string[];
     const priceLine = [
       validEntry.length ? `進場: ${validEntry.join(" / ")}` : "",
       validExit.length ? `出場: ${validExit.join(" / ")}` : "",
@@ -138,7 +151,7 @@ export function EditAnalysisModal({ analysis, onClose }: Props) {
               <label className="font-medium text-gray-600">進場價</label>
               <button
                 type="button"
-                onClick={() => setEntryPrices((p) => [...p, ""])}
+                onClick={() => { setEntryPrices((p) => [...p, ""]); setEntryQtys((q) => [...q, ""]); }}
                 className="text-xs text-blue-500 hover:text-blue-700"
               >
                 ＋ 多段進場
@@ -157,12 +170,28 @@ export function EditAnalysisModal({ analysis, onClose }: Props) {
                     }
                     min="0"
                     step="0.01"
-                    className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-24 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                  <span className="text-xs text-gray-400">×</span>
+                  <input
+                    type="number"
+                    placeholder="股數"
+                    value={entryQtys[idx] ?? ""}
+                    onChange={(e) =>
+                      setEntryQtys((q) => q.map((v, i) => (i === idx ? e.target.value : v)))
+                    }
+                    min="0"
+                    step="1"
+                    className="w-20 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <span className="text-xs text-gray-400">零股</span>
                   {entryPrices.length > 1 && (
                     <button
                       type="button"
-                      onClick={() => setEntryPrices((p) => p.filter((_, i) => i !== idx))}
+                      onClick={() => {
+                        setEntryPrices((p) => p.filter((_, i) => i !== idx));
+                        setEntryQtys((q) => q.filter((_, i) => i !== idx));
+                      }}
                       className="text-gray-400 hover:text-red-500"
                     >
                       ✕
@@ -179,7 +208,7 @@ export function EditAnalysisModal({ analysis, onClose }: Props) {
               <label className="font-medium text-gray-600">出場價</label>
               <button
                 type="button"
-                onClick={() => setExitPrices((p) => [...p, ""])}
+                onClick={() => { setExitPrices((p) => [...p, ""]); setExitQtys((q) => [...q, ""]); }}
                 className="text-xs text-blue-500 hover:text-blue-700"
               >
                 ＋ 多段出場
@@ -198,12 +227,28 @@ export function EditAnalysisModal({ analysis, onClose }: Props) {
                     }
                     min="0"
                     step="0.01"
-                    className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-24 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                  <span className="text-xs text-gray-400">×</span>
+                  <input
+                    type="number"
+                    placeholder="股數"
+                    value={exitQtys[idx] ?? ""}
+                    onChange={(e) =>
+                      setExitQtys((q) => q.map((v, i) => (i === idx ? e.target.value : v)))
+                    }
+                    min="0"
+                    step="1"
+                    className="w-20 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <span className="text-xs text-gray-400">零股</span>
                   {exitPrices.length > 1 && (
                     <button
                       type="button"
-                      onClick={() => setExitPrices((p) => p.filter((_, i) => i !== idx))}
+                      onClick={() => {
+                        setExitPrices((p) => p.filter((_, i) => i !== idx));
+                        setExitQtys((q) => q.filter((_, i) => i !== idx));
+                      }}
                       className="text-gray-400 hover:text-red-500"
                     >
                       ✕

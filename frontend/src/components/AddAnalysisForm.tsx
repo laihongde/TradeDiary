@@ -23,8 +23,10 @@ export function AddAnalysisForm() {
   const [direction, setDirection] = useState<Direction>("BULLISH");
   const [notes, setNotes] = useState("");
   const [tags, setTags] = useState("");
-  const [entryPrices, setEntryPrices] = useState<string[]>([""]);  
+  const [entryPrices, setEntryPrices] = useState<string[]>([""]);
+  const [entryQtys, setEntryQtys] = useState<string[]>([""]);
   const [exitPrices, setExitPrices] = useState<string[]>([""]);
+  const [exitQtys, setExitQtys] = useState<string[]>([""]);
   const [trackingDays, setTrackingDays] = useState<number>(5);
   const [customDays, setCustomDays] = useState("");
   const [useCustom, setUseCustom] = useState(false);
@@ -53,8 +55,13 @@ export function AddAnalysisForm() {
       const finalDays = useCustom
         ? Math.max(1, parseInt(customDays, 10) || 5)
         : trackingDays;
-      const validEntry = entryPrices.filter((p) => p.trim() !== "");
-      const validExit = exitPrices.filter((p) => p.trim() !== "");
+      const fmtLeg = (price: string, qty: string) => {
+        const p = price.trim(); const q = qty.trim();
+        if (!p) return null;
+        return q ? `${p}\u00d7${q}` : p;
+      };
+      const validEntry = entryPrices.map((p, i) => fmtLeg(p, entryQtys[i] ?? "")).filter(Boolean) as string[];
+      const validExit = exitPrices.map((p, i) => fmtLeg(p, exitQtys[i] ?? "")).filter(Boolean) as string[];
       const priceLine = [
         validEntry.length ? `進場: ${validEntry.join(" / ")}` : "",
         validExit.length ? `出場: ${validExit.join(" / ")}` : "",
@@ -72,7 +79,9 @@ export function AddAnalysisForm() {
       setNotes("");
       setTags("");
       setEntryPrices([""]);
+      setEntryQtys([""]);
       setExitPrices([""]);
+      setExitQtys([""]);
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
@@ -220,7 +229,7 @@ export function AddAnalysisForm() {
                   <span className="text-xs font-medium text-gray-500 dark:text-gray-400">進場價</span>
                   <button
                     type="button"
-                    onClick={() => setEntryPrices((p) => [...p, ""])}
+                    onClick={() => { setEntryPrices((p) => [...p, ""]); setEntryQtys((q) => [...q, ""]); }}
                     className="text-xs text-blue-500 hover:text-blue-700"
                   >
                     ＋ 多段進場
@@ -239,12 +248,28 @@ export function AddAnalysisForm() {
                         }
                         min="0"
                         step="0.01"
-                        className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                        className="w-24 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                       />
+                      <span className="text-xs text-gray-400">×</span>
+                      <input
+                        type="number"
+                        placeholder="股數"
+                        value={entryQtys[idx] ?? ""}
+                        onChange={(e) =>
+                          setEntryQtys((q) => q.map((v, i) => (i === idx ? e.target.value : v)))
+                        }
+                        min="0"
+                        step="1"
+                        className="w-20 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                      />
+                      <span className="text-xs text-gray-400">零股</span>
                       {entryPrices.length > 1 && (
                         <button
                           type="button"
-                          onClick={() => setEntryPrices((p) => p.filter((_, i) => i !== idx))}
+                          onClick={() => {
+                            setEntryPrices((p) => p.filter((_, i) => i !== idx));
+                            setEntryQtys((q) => q.filter((_, i) => i !== idx));
+                          }}
                           className="text-gray-400 hover:text-red-500"
                         >
                           ✕
@@ -260,7 +285,7 @@ export function AddAnalysisForm() {
                   <span className="text-xs font-medium text-gray-500 dark:text-gray-400">出場價</span>
                   <button
                     type="button"
-                    onClick={() => setExitPrices((p) => [...p, ""])}
+                    onClick={() => { setExitPrices((p) => [...p, ""]); setExitQtys((q) => [...q, ""]); }}
                     className="text-xs text-blue-500 hover:text-blue-700"
                   >
                     ＋ 多段出場
@@ -279,12 +304,28 @@ export function AddAnalysisForm() {
                         }
                         min="0"
                         step="0.01"
-                        className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                        className="w-24 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                       />
+                      <span className="text-xs text-gray-400">×</span>
+                      <input
+                        type="number"
+                        placeholder="股數"
+                        value={exitQtys[idx] ?? ""}
+                        onChange={(e) =>
+                          setExitQtys((q) => q.map((v, i) => (i === idx ? e.target.value : v)))
+                        }
+                        min="0"
+                        step="1"
+                        className="w-20 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                      />
+                      <span className="text-xs text-gray-400">零股</span>
                       {exitPrices.length > 1 && (
                         <button
                           type="button"
-                          onClick={() => setExitPrices((p) => p.filter((_, i) => i !== idx))}
+                          onClick={() => {
+                            setExitPrices((p) => p.filter((_, i) => i !== idx));
+                            setExitQtys((q) => q.filter((_, i) => i !== idx));
+                          }}
                           className="text-gray-400 hover:text-red-500"
                         >
                           ✕

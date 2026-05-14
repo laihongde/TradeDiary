@@ -128,8 +128,6 @@ export async function createAnalysis(
   });
 }
 
-// ── updateAnalysis：對應原本 backend PATCH 行為 ──────────────────────────────
-
 export type UpdateAnalysisData = Partial<{
   notes: string;
   tags: string[];

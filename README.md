@@ -111,18 +111,15 @@ npm run preview   # 在本機檢視 build 結果
 ```
 .
 ├── .github/workflows/deploy.yml   # GitHub Pages 自動部署
-├── frontend/                      # React + Vite 前端（部署根目錄）
-│   ├── src/
-│   │   ├── api/client.ts          # local-first API 介面（保留舊版簽章）
-│   │   ├── db/                    # IndexedDB schema、CRUD、備份
-│   │   ├── providers/             # FinMind / TWSE / TPEx / manual / mock + dispatcher
-│   │   ├── services/              # tradingDays / analysis / statistics / autoCheck
-│   │   ├── hooks/                 # React Query hooks（未動）
-│   │   ├── components/            # UI 元件
-│   │   └── types/                 # 共用型別
-│   ├── public/404.html            # SPA fallback（保險）
-│   └── vite.config.ts             # base='/', 無 server proxy
-└── backend/                       # 舊版 Python + Postgres 後端（保留作為商業邏輯參考，已停用）
+└── frontend/                      # React + Vite 前端（部署根目錄）
+    ├── src/
+    │   ├── api/client.ts          # local-first API 介面（保留舊版簽章）
+    │   ├── db/                    # IndexedDB schema、CRUD、備份
+    │   ├── providers/             # FinMind / TWSE / TPEx / manual / mock + dispatcher
+    │   ├── services/              # tradingDays / analysis / statistics / autoCheck
+    │   ├── hooks/                 # React Query hooks（未動）
+    │   ├── components/            # UI 元件
+    │   └── types/                 # 共用型別
+    ├── public/404.html            # SPA fallback（保險）
+    └── vite.config.ts             # base='/', 無 server proxy
 ```
-
-`backend/` 內的 FastAPI / Prisma schema / yfinance 整合仍保留作為商業邏輯文件，**不再被使用**，未來可移除或改寫成 `docs/business-logic.md`。

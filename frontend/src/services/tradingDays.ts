@@ -1,5 +1,3 @@
-// Port from backend/app/services/analysis_service.py:44-104
-
 const TAIWAN_HOLIDAYS: ReadonlySet<string> = new Set([
   // 2026 固定國定假日
   "2026-01-01", // 元旦

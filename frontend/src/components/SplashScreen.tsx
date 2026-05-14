@@ -134,7 +134,7 @@ export function SplashScreen({ onFinish }: SplashScreenProps) {
 
         {/* 標題 */}
         <h1 className="splash-title">
-          {"股票分析練習紀錄".split("").map((ch, i) => (
+          {"股惑仔".split("").map((ch, i) => (
             <span
               key={i}
               className="splash-letter"
